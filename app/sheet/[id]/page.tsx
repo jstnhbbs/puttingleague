@@ -2,6 +2,12 @@ import Link from 'next/link'
 import styles from './page.module.css'
 import { sheets, getEmbedUrl } from '../../data/sheets'
 
+export function generateStaticParams() {
+  return sheets.map((sheet) => ({
+    id: sheet.id,
+  }))
+}
+
 export default function SheetPage({ params }: { params: { id: string } }) {
   const sheet = sheets.find((s) => s.id === params.id)
 
