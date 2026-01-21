@@ -7,14 +7,17 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Enable CORS for your GitHub Pages domain
+// Enable CORS for your GitHub Pages domain and ngrok
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'https://jstnhbbs.github.io', // Replace with your GitHub Pages URL
-    /\.github\.io$/ // Allow any GitHub Pages subdomain
-  ],
-  credentials: true
+    origin: [
+        'http://localhost:3000',
+        'https://jstnhbbs.github.io', // Your GitHub Pages URL
+        /\.github\.io$/, // Allow any GitHub Pages subdomain
+        /\.ngrok-free\.app$/, // Allow any ngrok free tier URL
+        /\.ngrok\.io$/, // Allow any ngrok paid tier URL
+        /\.ngrok-app\.dev$/ // Allow ngrok app dev URLs
+    ],
+    credentials: true
 }));
 
 app.use(express.json());
@@ -22,7 +25,7 @@ app.use(express.json());
 // Create data directory if it doesn't exist
 const dataDir = path.join(__dirname, 'data');
 if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir);
+    fs.mkdirSync(dataDir);
 }
 
 // Initialize SQLite database
@@ -44,35 +47,35 @@ db.exec(`
 
 // Get all cells
 app.get('/api/cells', (req, res) => {
-  try {
-    const stmt = db.prepare('SELECT cell_key, value, is_formula FROM cells');
-    const rows = stmt.all();
-    
-    const cells = {};
-    rows.forEach(row => {
-      cells[row.cell_key] = {
-        value: row.value,
-        isFormula: row.is_formula === 1
-      };
-    });
-    
-    res.json(cells);
-  } catch (error) {
-    console.error('Error fetching cells:', error);
-    res.status(500).json({ error: 'Failed to fetch cells' });
-  }
+    try {
+        const stmt = db.prepare('SELECT cell_key, value, is_formula FROM cells');
+        const rows = stmt.all();
+
+        const cells = {};
+        rows.forEach(row => {
+            cells[row.cell_key] = {
+                value: row.value,
+                isFormula: row.is_formula === 1
+            };
+        });
+
+        res.json(cells);
+    } catch (error) {
+        console.error('Error fetching cells:', error);
+        res.status(500).json({ error: 'Failed to fetch cells' });
+    }
 });
 
 // Save a single cell
 app.post('/api/cells', (req, res) => {
-  try {
-    const { cellKey, value, isFormula } = req.body;
-    
-    if (!cellKey) {
-      return res.status(400).json({ error: 'cellKey is required' });
-    }
-    
-    const stmt = db.prepare(`
+    try {
+        const { cellKey, value, isFormula } = req.body;
+
+        if (!cellKey) {
+            return res.status(400).json({ error: 'cellKey is required' });
+        }
+
+        const stmt = db.prepare(`
       INSERT INTO cells (cell_key, value, is_formula, updated_at)
       VALUES (?, ?, ?, CURRENT_TIMESTAMP)
       ON CONFLICT(cell_key) DO UPDATE SET
@@ -80,26 +83,26 @@ app.post('/api/cells', (req, res) => {
         is_formula = excluded.is_formula,
         updated_at = CURRENT_TIMESTAMP
     `);
-    
-    stmt.run(cellKey, value || '', isFormula ? 1 : 0);
-    
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Error saving cell:', error);
-    res.status(500).json({ error: 'Failed to save cell' });
-  }
+
+        stmt.run(cellKey, value || '', isFormula ? 1 : 0);
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error saving cell:', error);
+        res.status(500).json({ error: 'Failed to save cell' });
+    }
 });
 
 // Save multiple cells (batch update)
 app.post('/api/cells/batch', (req, res) => {
-  try {
-    const { cells } = req.body;
-    
-    if (!cells || typeof cells !== 'object') {
-      return res.status(400).json({ error: 'cells object is required' });
-    }
-    
-    const stmt = db.prepare(`
+    try {
+        const { cells } = req.body;
+
+        if (!cells || typeof cells !== 'object') {
+            return res.status(400).json({ error: 'cells object is required' });
+        }
+
+        const stmt = db.prepare(`
       INSERT INTO cells (cell_key, value, is_formula, updated_at)
       VALUES (?, ?, ?, CURRENT_TIMESTAMP)
       ON CONFLICT(cell_key) DO UPDATE SET
@@ -107,42 +110,43 @@ app.post('/api/cells/batch', (req, res) => {
         is_formula = excluded.is_formula,
         updated_at = CURRENT_TIMESTAMP
     `);
-    
-    const transaction = db.transaction((cells) => {
-      for (const [cellKey, cell] of Object.entries(cells)) {
-        stmt.run(cellKey, cell.value || '', cell.isFormula ? 1 : 0);
-      }
-    });
-    
-    transaction(cells);
-    
-    res.json({ success: true, count: Object.keys(cells).length });
-  } catch (error) {
-    console.error('Error saving cells:', error);
-    res.status(500).json({ error: 'Failed to save cells' });
-  }
+
+        const transaction = db.transaction((cells) => {
+            for (const [cellKey, cell] of Object.entries(cells)) {
+                stmt.run(cellKey, cell.value || '', cell.isFormula ? 1 : 0);
+            }
+        });
+
+        transaction(cells);
+
+        res.json({ success: true, count: Object.keys(cells).length });
+    } catch (error) {
+        console.error('Error saving cells:', error);
+        res.status(500).json({ error: 'Failed to save cells' });
+    }
 });
 
 // Delete a cell
 app.delete('/api/cells/:cellKey', (req, res) => {
-  try {
-    const { cellKey } = req.params;
-    const stmt = db.prepare('DELETE FROM cells WHERE cell_key = ?');
-    const result = stmt.run(cellKey);
-    
-    res.json({ success: true, deleted: result.changes > 0 });
-  } catch (error) {
-    console.error('Error deleting cell:', error);
-    res.status(500).json({ error: 'Failed to delete cell' });
-  }
+    try {
+        const { cellKey } = req.params;
+        const stmt = db.prepare('DELETE FROM cells WHERE cell_key = ?');
+        const result = stmt.run(cellKey);
+
+        res.json({ success: true, deleted: result.changes > 0 });
+    } catch (error) {
+        console.error('Error deleting cell:', error);
+        res.status(500).json({ error: 'Failed to delete cell' });
+    }
 });
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-  console.log(`Database: ${dbPath}`);
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on http://0.0.0.0:${PORT}`);
+    console.log(`Accessible at http://localhost:${PORT} or http://YOUR_IP:${PORT}`);
+    console.log(`Database: ${dbPath}`);
 });

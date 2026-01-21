@@ -1,8 +1,8 @@
 // API configuration
 // Change this to your Mac mini's IP address or domain
 // For local development: 'http://localhost:3001'
-// For production: 'http://YOUR_MAC_MINI_IP:3001' or your domain
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+// For production: 'http://100.72.185.61:3001' or your domain
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://100.72.185.61:3001'
 
 export interface Cell {
   value: string
