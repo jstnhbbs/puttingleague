@@ -29,6 +29,12 @@ export function Navbar() {
           >
             Rules
           </Link>
+          <Link
+            href="/test"
+            className={`${styles.navLink} ${pathname === '/test' ? styles.active : ''}`}
+          >
+            Test
+          </Link>
           <ThemeToggle />
         </div>
       </div>
