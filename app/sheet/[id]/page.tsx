@@ -2,6 +2,7 @@ import Link from 'next/link'
 import styles from './page.module.css'
 import { sheets, getEmbedUrl } from '../../data/sheets'
 import { SheetIframe } from '../../components/SheetIframe'
+import TestPageContent from './TestPageContent'
 
 export function generateStaticParams() {
   return sheets.map((sheet) => ({
@@ -21,6 +22,11 @@ export default function SheetPage({ params }: { params: { id: string } }) {
         </Link>
       </div>
     )
+  }
+
+  // For Season 6, show the test page content instead of the Google Sheet
+  if (params.id === 'season6') {
+    return <TestPageContent sheetTitle={sheet.title} />
   }
 
   const embedUrl = getEmbedUrl(sheet.sheetUrl)

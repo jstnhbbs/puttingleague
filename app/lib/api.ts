@@ -2,8 +2,8 @@
 // Change this to your Mac mini's IP address or domain
 // For local development: 'http://localhost:3001'
 // For production: 'http://100.72.185.61:3001' or your domain
-// Or use ngrok: 'https://korean-dans-prescription-after.trycloudflare.com'
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://korean-dans-prescription-after.trycloudflare.com'
+// Or use ngrok: 'https://recreational-independence-merely-barriers.trycloudflare.com'
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://recreational-independence-merely-barriers.trycloudflare.com'
 
 export interface Cell {
     value: string
@@ -18,12 +18,19 @@ export interface CellsResponse {
 export async function fetchCells(): Promise<CellsResponse> {
     try {
         console.log('Fetching cells from:', `${API_URL}/api/cells`)
+        // Add timeout to prevent hanging
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+
         const response = await fetch(`${API_URL}/api/cells`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
             },
+            signal: controller.signal,
         })
+
+        clearTimeout(timeoutId)
 
         if (!response.ok) {
             const text = await response.text()
@@ -130,12 +137,19 @@ export async function deleteCell(cellKey: string): Promise<boolean> {
 // Check if the API server is available
 export async function checkHealth(): Promise<boolean> {
     try {
+        // Add timeout to prevent hanging
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout
+
         const response = await fetch(`${API_URL}/api/health`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
             },
+            signal: controller.signal,
         })
+
+        clearTimeout(timeoutId)
 
         if (!response.ok) {
             console.warn('Health check failed:', response.status, response.statusText)
@@ -153,7 +167,11 @@ export async function checkHealth(): Promise<boolean> {
         console.log('Health check passed:', data)
         return true
     } catch (error) {
-        console.warn('Health check error:', error)
+        if (error instanceof Error && error.name === 'AbortError') {
+            console.warn('Health check timed out after 5 seconds')
+        } else {
+            console.warn('Health check error:', error)
+        }
         return false
     }
 }
