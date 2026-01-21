@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 3001;
 app.use(cors({
   origin: [
     'http://localhost:3000',
-    'https://yourusername.github.io', // Replace with your GitHub Pages URL
+    'https://jstnhbbs.github.io', // Replace with your GitHub Pages URL
     /\.github\.io$/ // Allow any GitHub Pages subdomain
   ],
   credentials: true
