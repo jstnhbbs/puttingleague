@@ -49,6 +49,10 @@ db.exec(`
 app.get('/api/cells', (req, res) => {
     try {
         console.log(`[${new Date().toISOString()}] GET /api/cells - Request from: ${req.headers.origin || req.headers.referer || 'unknown'}`);
+
+        // Ensure we return JSON
+        res.setHeader('Content-Type', 'application/json');
+
         const stmt = db.prepare('SELECT cell_key, value, is_formula FROM cells');
         const rows = stmt.all();
 
@@ -64,6 +68,7 @@ app.get('/api/cells', (req, res) => {
         res.json(cells);
     } catch (error) {
         console.error('Error fetching cells:', error);
+        res.setHeader('Content-Type', 'application/json');
         res.status(500).json({ error: 'Failed to fetch cells' });
     }
 });
@@ -150,6 +155,7 @@ app.delete('/api/cells/:cellKey', (req, res) => {
 
 // Health check
 app.get('/api/health', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 

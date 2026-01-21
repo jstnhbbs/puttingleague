@@ -26,8 +26,19 @@ export async function fetchCells(): Promise<CellsResponse> {
         })
 
         if (!response.ok) {
+            const text = await response.text()
             console.error('Failed to fetch cells:', response.status, response.statusText)
-            throw new Error(`Failed to fetch cells: ${response.status}`)
+            console.error('Response body:', text)
+            throw new Error(`Failed to fetch cells: ${response.status} - ${text}`)
+        }
+
+        // Check if response is actually JSON
+        const contentType = response.headers.get('content-type')
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text()
+            console.error('Response is not JSON. Content-Type:', contentType)
+            console.error('Response body:', text.substring(0, 200))
+            throw new Error('Response is not JSON')
         }
 
         const data = await response.json()
@@ -81,6 +92,19 @@ export async function saveCells(cells: Record<string, Cell>): Promise<boolean> {
             return false
         }
 
+        // Check if response is actually JSON
+        const contentType = response.headers.get('content-type')
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text()
+            console.error('Response is not JSON. Content-Type:', contentType)
+            console.error('Response body:', text.substring(0, 500))
+            // Check if it's ngrok interstitial page
+            if (text.includes('ngrok') || text.includes('Visit Site')) {
+                console.error('⚠️ ngrok interstitial page detected! You may need to visit the ngrok URL in a browser first to bypass it.')
+            }
+            return false
+        }
+
         const result = await response.json()
         console.log('Successfully saved cells:', result)
         return true
@@ -106,9 +130,30 @@ export async function deleteCell(cellKey: string): Promise<boolean> {
 // Check if the API server is available
 export async function checkHealth(): Promise<boolean> {
     try {
-        const response = await fetch(`${API_URL}/api/health`)
-        return response.ok
+        const response = await fetch(`${API_URL}/api/health`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+
+        if (!response.ok) {
+            console.warn('Health check failed:', response.status, response.statusText)
+            return false
+        }
+
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type')
+        if (!contentType || !contentType.includes('application/json')) {
+            console.warn('Health check returned non-JSON response')
+            return false
+        }
+
+        const data = await response.json()
+        console.log('Health check passed:', data)
+        return true
     } catch (error) {
+        console.warn('Health check error:', error)
         return false
     }
 }
