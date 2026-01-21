@@ -25,7 +25,7 @@ export function SheetIframe({ src, title, className }: SheetIframeProps) {
     const newSrc = addCacheBuster(src)
     setIframeSrc(newSrc)
     setRefreshKey(prev => prev + 1)
-    
+
     // Force iframe reload if it exists
     if (iframeRef.current) {
       iframeRef.current.src = ''
@@ -57,7 +57,7 @@ export function SheetIframe({ src, title, className }: SheetIframeProps) {
 
     document.addEventListener('visibilitychange', handleVisibilityChange)
     window.addEventListener('focus', handleFocus)
-    
+
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
       window.removeEventListener('focus', handleFocus)
