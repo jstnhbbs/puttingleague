@@ -26,7 +26,7 @@ export default function TestPageContent({ sheetTitle }: TestPageContentProps) {
     const [selectedCell, setSelectedCell] = useState<string | null>(null)
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
     const [passwordInput, setPasswordInput] = useState<string>('')
-    const [showPasswordPrompt, setShowPasswordPrompt] = useState<boolean>(true)
+    const [showPasswordPrompt, setShowPasswordPrompt] = useState<boolean>(false) // Default to false - view-only mode
     const [passwordError, setPasswordError] = useState<string>('')
     const [isLoading, setIsLoading] = useState<boolean>(true)
     const [useDatabase, setUseDatabase] = useState<boolean>(false)
@@ -136,6 +136,10 @@ export default function TestPageContent({ sheetTitle }: TestPageContentProps) {
         if (authStatus === 'authenticated') {
             setIsAuthenticated(true)
             setShowPasswordPrompt(false)
+        } else {
+            // Default to view-only mode
+            setIsAuthenticated(false)
+            setShowPasswordPrompt(false)
         }
     }, [])
 
@@ -154,8 +158,14 @@ export default function TestPageContent({ sheetTitle }: TestPageContentProps) {
 
     const handleLogout = () => {
         setIsAuthenticated(false)
-        setShowPasswordPrompt(true)
+        setShowPasswordPrompt(false) // Don't show prompt, just go back to view-only
         localStorage.removeItem('testPageAuth')
+    }
+
+    const handleUnlockClick = () => {
+        setShowPasswordPrompt(true)
+        setPasswordError('')
+        setPasswordInput('')
     }
 
     const handleRefresh = async () => {
@@ -357,53 +367,7 @@ export default function TestPageContent({ sheetTitle }: TestPageContentProps) {
     const rowNames = ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6', 'Week 7', 'Week 8', 'Week 9', 'Week 10', 'Total', 'w/ Drops']
     const getRowLabel = (row: number) => rowNames[row] || `Row ${row + 1}`
 
-    // Password prompt overlay
-    if (showPasswordPrompt && !isAuthenticated) {
-        return (
-            <main className={styles.main}>
-                <div className={styles.container}>
-                    <div className={styles.header}>
-                        <Link href="/" className={styles.backLink}>
-                            ← Back to Home
-                        </Link>
-                        <h1 className={styles.title}>{sheetTitle}</h1>
-                    </div>
-                    <div className={styles.passwordPrompt}>
-                        <h2 className={styles.passwordTitle}>Enter Password to Edit</h2>
-                        <p className={styles.passwordSubtitle}>This page is view-only. Enter the password to enable editing.</p>
-                        <form onSubmit={handlePasswordSubmit} className={styles.passwordForm}>
-                            <input
-                                type="password"
-                                value={passwordInput}
-                                onChange={(e) => setPasswordInput(e.target.value)}
-                                className={styles.passwordInput}
-                                placeholder="Enter password"
-                                autoFocus
-                            />
-                            {passwordError && (
-                                <p className={styles.passwordError}>{passwordError}</p>
-                            )}
-                            <div className={styles.passwordButtons}>
-                                <button type="submit" className={styles.passwordButton}>
-                                    Unlock Editing
-                                </button>
-                                <button
-                                    type="button"
-                                    className={styles.viewOnlyButton}
-                                    onClick={() => {
-                                        setShowPasswordPrompt(false)
-                                        setPasswordError('')
-                                    }}
-                                >
-                                    View Only
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </main>
-        )
-    }
+    // Password prompt overlay (shown as modal when user clicks unlock)
 
     return (
         <main className={styles.main}>
@@ -423,9 +387,14 @@ export default function TestPageContent({ sheetTitle }: TestPageContentProps) {
                             <button onClick={handleRefresh} className={styles.refreshButton} title="Refresh data from database">
                                 🔄 Refresh
                             </button>
+                            {!isAuthenticated && (
+                                <button onClick={handleUnlockClick} className={styles.unlockButton}>
+                                    🔓 Unlock Editing
+                                </button>
+                            )}
                             {isAuthenticated && (
                                 <button onClick={handleLogout} className={styles.logoutButton}>
-                                    Lock Editing
+                                    🔒 Lock Editing
                                 </button>
                             )}
                         </div>
@@ -526,12 +495,55 @@ export default function TestPageContent({ sheetTitle }: TestPageContentProps) {
                         ) : (
                             <>
                                 <li>This page is in view-only mode</li>
-                                <li>Enter the password to enable editing</li>
+                                <li>Click "Unlock Editing" to enable editing with admin password</li>
                                 <li>All calculations (rows 11 and 12) are still visible and update automatically</li>
                             </>
                         )}
                     </ul>
                 </div>
+
+                {/* Password prompt modal overlay */}
+                {showPasswordPrompt && !isAuthenticated && (
+                    <div className={styles.modalOverlay} onClick={() => {
+                        setShowPasswordPrompt(false)
+                        setPasswordError('')
+                        setPasswordInput('')
+                    }}>
+                        <div className={styles.passwordPrompt} onClick={(e) => e.stopPropagation()}>
+                            <h2 className={styles.passwordTitle}>Enter Admin Password</h2>
+                            <p className={styles.passwordSubtitle}>Enter the password to unlock editing mode.</p>
+                            <form onSubmit={handlePasswordSubmit} className={styles.passwordForm}>
+                                <input
+                                    type="password"
+                                    value={passwordInput}
+                                    onChange={(e) => setPasswordInput(e.target.value)}
+                                    className={styles.passwordInput}
+                                    placeholder="Enter password"
+                                    autoFocus
+                                />
+                                {passwordError && (
+                                    <p className={styles.passwordError}>{passwordError}</p>
+                                )}
+                                <div className={styles.passwordButtons}>
+                                    <button type="submit" className={styles.passwordButton}>
+                                        Unlock Editing
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={styles.viewOnlyButton}
+                                        onClick={() => {
+                                            setShowPasswordPrompt(false)
+                                            setPasswordError('')
+                                            setPasswordInput('')
+                                        }}
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
             </div>
         </main>
     )
