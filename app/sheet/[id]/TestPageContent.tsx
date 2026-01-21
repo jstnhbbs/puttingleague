@@ -402,7 +402,7 @@ export default function TestPageContent({ sheetTitle }: TestPageContentProps) {
                 </div>
                 <p className={styles.subtitle}>
                     {isAuthenticated
-                        ? 'Enter numbers or formulas (e.g., =A1+B1)'
+                        ? ' '
                         : 'View-only mode - Enter password to edit'}
                 </p>
                 {isLoading && (
@@ -486,9 +486,6 @@ export default function TestPageContent({ sheetTitle }: TestPageContentProps) {
                             <>
                                 <li>Click any cell to edit (except rows 11 and 12)</li>
                                 <li>Enter numbers directly (e.g., 123, 45.67)</li>
-                                <li>Start with = to create a formula (e.g., =A1+B1, =SUM(A1:A5))</li>
-                                <li>Use cell references like A1, B2, etc.</li>
-                                <li>Supported operations: +, -, *, /, parentheses</li>
                                 <li><strong>Row 11: Automatically sums rows 1-10 for each column</strong></li>
                                 <li><strong>Row 12: Total of rows 1-10 minus the two lowest scores in that column</strong></li>
                             </>
