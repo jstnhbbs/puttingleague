@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import styles from './page.module.css'
 import { sheets, mainSheetUrl } from './data/sheets'
+import { SheetIframe } from './components/SheetIframe'
 
 export default function Home() {
     // Reverse the sheets array to display in reverse order
@@ -24,7 +25,7 @@ export default function Home() {
                     ))}
                 </div>
                 <div className={styles.sheetEmbed}>
-                    <iframe
+                    <SheetIframe
                         src={mainSheetUrl}
                         className={styles.sheetFrame}
                         title="Putting League Main Sheet"

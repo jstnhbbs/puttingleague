@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import styles from './page.module.css'
 import { sheets, getEmbedUrl } from '../../data/sheets'
+import { SheetIframe } from '../../components/SheetIframe'
 
 export function generateStaticParams() {
   return sheets.map((sheet) => ({
@@ -33,7 +34,7 @@ export default function SheetPage({ params }: { params: { id: string } }) {
         <h1 className={styles.title}>{sheet.title}</h1>
       </div>
       <div className={styles.sheetContainer}>
-        <iframe
+        <SheetIframe
           src={embedUrl}
           className={styles.sheetFrame}
           title={sheet.title}
