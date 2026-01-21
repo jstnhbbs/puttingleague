@@ -10,7 +10,7 @@ interface Cell {
 }
 
 const ROWS = 12
-const COLS = 8
+const COLS = 7
 // Set your password here - change this to your desired password
 const EDIT_PASSWORD = 'admin123' // Change this to your password
 
@@ -343,7 +343,14 @@ export default function TestPage() {
         setSelectedCell(null)
     }
 
-    const getColumnLetter = (col: number) => String.fromCharCode(65 + col) // A, B, C, etc.
+    // Customize column headers here
+    const columnNames = ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Brad', 'Tyler']
+    const getColumnLetter = (col: number) => columnNames[col] || `Col ${col + 1}`
+
+    // Customize row headers here
+    // Rows 1-10 are regular rounds, row 11 is sum, row 12 is total minus two lowest
+    const rowNames = ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6', 'Week 7', 'Week 8', 'Week 9', 'Week 10', 'Total', 'w/ Drops']
+    const getRowLabel = (row: number) => rowNames[row] || `Row ${row + 1}`
 
     // Password prompt overlay
     if (showPasswordPrompt && !isAuthenticated) {
@@ -432,7 +439,7 @@ export default function TestPage() {
                         <tbody>
                             {Array.from({ length: ROWS }, (_, row) => (
                                 <tr key={row}>
-                                    <td className={styles.rowHeader}>{row + 1}</td>
+                                    <td className={styles.rowHeader}>{getRowLabel(row)}</td>
                                     {Array.from({ length: COLS }, (_, col) => {
                                         const key = getCellKey(row, col)
                                         const cell = cells[key]
