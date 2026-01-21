@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import styles from './page.module.css'
-import { sheets } from './data/sheets'
+import { sheets, mainSheetUrl } from './data/sheets'
 
 export default function Home() {
     // Reverse the sheets array to display in reverse order
@@ -10,7 +10,7 @@ export default function Home() {
         <main className={styles.main}>
             <div className={styles.container}>
                 <h1 className={styles.title}>Putting League</h1>
-                <p className={styles.subtitle}>Select a sheet to view</p>
+                <p className={styles.subtitle}>Select a season to view</p>
                 <div className={styles.grid}>
                     {reversedSheets.map((sheet) => (
                         <Link
@@ -22,6 +22,13 @@ export default function Home() {
                             <p className={styles.cardDescription}>{sheet.description}</p>
                         </Link>
                     ))}
+                </div>
+                <div className={styles.sheetEmbed}>
+                    <iframe
+                        src={mainSheetUrl}
+                        className={styles.sheetFrame}
+                        title="Putting League Main Sheet"
+                    />
                 </div>
             </div>
         </main>

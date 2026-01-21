@@ -5,49 +5,57 @@ export interface Sheet {
   sheetUrl: string
 }
 
+// Main sheet URL for home page embed
+export const mainSheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQbJtP2iVNdFvBKQiZeMJIuiEsLY5M8mv3hcGFXXxJSinxSWWJaBdCtaNZWILdAiT3iOafQoDlpD95N/pubhtml?gid=348497959&single=true'
+
 export const sheets: Sheet[] = [
   {
-    id: 'sheet1',
-    title: 'Sheet 1',
-    description: 'View and edit Sheet 1',
-    // Replace with your actual Google Sheet embed URL
-    // Format: https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit?usp=sharing
-    sheetUrl: 'https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID_1/edit?usp=sharing',
+    id: 'season1',
+    title: 'Season 1',
+    description: 'View Season 1',
+    sheetUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQbJtP2iVNdFvBKQiZeMJIuiEsLY5M8mv3hcGFXXxJSinxSWWJaBdCtaNZWILdAiT3iOafQoDlpD95N/pubhtml?gid=1134880669&single=true',
   },
   {
-    id: 'sheet2',
-    title: 'Sheet 2',
-    description: 'View and edit Sheet 2',
-    sheetUrl: 'https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID_2/edit?usp=sharing',
+    id: 'season2',
+    title: 'Season 2',
+    description: 'View Season 2',
+    sheetUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQbJtP2iVNdFvBKQiZeMJIuiEsLY5M8mv3hcGFXXxJSinxSWWJaBdCtaNZWILdAiT3iOafQoDlpD95N/pubhtml?gid=1204258671&single=true',
   },
   {
-    id: 'sheet3',
-    title: 'Sheet 3',
-    description: 'View and edit Sheet 3',
-    sheetUrl: 'https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID_3/edit?usp=sharing',
+    id: 'season3',
+    title: 'Season 3',
+    description: 'View Season 3',
+    sheetUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQbJtP2iVNdFvBKQiZeMJIuiEsLY5M8mv3hcGFXXxJSinxSWWJaBdCtaNZWILdAiT3iOafQoDlpD95N/pubhtml?gid=0&single=true',
   },
   {
-    id: 'sheet4',
-    title: 'Sheet 4',
-    description: 'View and edit Sheet 4',
-    sheetUrl: 'https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID_4/edit?usp=sharing',
+    id: 'season4',
+    title: 'Season 4',
+    description: 'View Season 4',
+    sheetUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQbJtP2iVNdFvBKQiZeMJIuiEsLY5M8mv3hcGFXXxJSinxSWWJaBdCtaNZWILdAiT3iOafQoDlpD95N/pubhtml?gid=1919204812&single=true',
   },
   {
-    id: 'sheet5',
-    title: 'Sheet 5',
-    description: 'View and edit Sheet 5',
-    sheetUrl: 'https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID_5/edit?usp=sharing',
+    id: 'season5',
+    title: 'Season 5',
+    description: 'View Season 5',
+    sheetUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQbJtP2iVNdFvBKQiZeMJIuiEsLY5M8mv3hcGFXXxJSinxSWWJaBdCtaNZWILdAiT3iOafQoDlpD95N/pubhtml?gid=643864506&single=true',
   },
 ]
 
 // Convert Google Sheets sharing URL to embed URL
 export function getEmbedUrl(sheetUrl: string): string {
-  // Extract the sheet ID from the URL
+  // Check if URL is already a published HTML URL (pubhtml) - these can be embedded directly
+  if (sheetUrl.includes('/pubhtml')) {
+    return sheetUrl
+  }
+
+  // Extract the sheet ID from standard sharing URLs
   const match = sheetUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/)
   if (match && match[1]) {
     const sheetId = match[1]
-    // Return the embed URL
+    // Return the embed URL using the extracted sheet ID
     return `https://docs.google.com/spreadsheets/d/${sheetId}/preview`
   }
+
+  // Fallback: return original URL
   return sheetUrl
 }

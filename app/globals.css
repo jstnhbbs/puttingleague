@@ -22,12 +22,12 @@ body {
 
 /* Light mode (default) */
 body {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #faf8f3 50%, #f5e6d3 100%);
 }
 
 /* Dark mode */
 [data-theme='dark'] body {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
 }
 
 a {

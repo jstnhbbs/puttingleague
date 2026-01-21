@@ -15,14 +15,15 @@
   font-size: 3rem;
   font-weight: 700;
   text-align: center;
-  color: white;
+  color: #333;
   margin-bottom: 2rem;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+  text-shadow: none;
   transition: color 0.3s ease;
 }
 
 [data-theme='dark'] .title {
   color: #e0e0e0;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .content {
@@ -94,13 +95,13 @@
   content: '•';
   position: absolute;
   left: 0;
-  color: #667eea;
+  color: #B79953;
   font-weight: bold;
   font-size: 1.5rem;
 }
 
 [data-theme='dark'] .list li::before {
-  color: #8b9aff;
+  color: #B79953;
 }
 
 @media (max-width: 768px) {

@@ -11,40 +11,48 @@
 
 .backLink {
   display: inline-block;
-  color: white;
+  color: #333;
   font-size: 1rem;
   margin-bottom: 1rem;
   padding: 0.5rem 1rem;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(183, 153, 83, 0.3);
   border-radius: 8px;
   transition: all 0.2s ease;
   text-decoration: none;
 }
 
 [data-theme='dark'] .backLink {
+  color: white;
   background: rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .backLink:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(183, 153, 83, 0.3);
+  color: #B79953;
+  border-color: #B79953;
   transform: translateX(-4px);
 }
 
 [data-theme='dark'] .backLink:hover {
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(183, 153, 83, 0.2);
+  color: #B79953;
+  border-color: #B79953;
 }
 
 .title {
   font-size: 2.5rem;
   font-weight: 700;
-  color: white;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+  color: #333;
+  text-shadow: none;
   transition: color 0.3s ease;
+  text-align: center;
 }
 
 [data-theme='dark'] .title {
   color: #e0e0e0;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .sheetContainer {
@@ -57,6 +65,9 @@
   display: flex;
   flex-direction: column;
   transition: background 0.3s ease, box-shadow 0.3s ease;
+  max-width: 1000px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 [data-theme='dark'] .sheetContainer {
