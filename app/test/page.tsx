@@ -32,19 +32,29 @@ export default function TestPage() {
             setIsLoading(true)
 
             // First, try to use the database
+            console.log('Checking database availability...')
             const dbAvailable = await checkHealth()
+            console.log('Database available:', dbAvailable)
             setUseDatabase(dbAvailable)
 
             if (dbAvailable) {
                 try {
+                    console.log('Loading cells from database...')
                     const savedCells = await fetchCells()
-                    setCells(savedCells)
+                    if (Object.keys(savedCells).length > 0) {
+                        console.log('Loaded', Object.keys(savedCells).length, 'cells from database')
+                        setCells(savedCells)
+                    } else {
+                        console.log('No cells in database, checking localStorage...')
+                        loadFromLocalStorage()
+                    }
                 } catch (error) {
                     console.error('Error loading from database, falling back to localStorage:', error)
                     // Fallback to localStorage
                     loadFromLocalStorage()
                 }
             } else {
+                console.log('Database not available, loading from localStorage...')
                 // Fallback to localStorage if database is not available
                 loadFromLocalStorage()
             }
@@ -57,7 +67,10 @@ export default function TestPage() {
                 const savedCells = localStorage.getItem(STORAGE_KEY)
                 if (savedCells) {
                     const parsed = JSON.parse(savedCells)
+                    console.log('Loaded', Object.keys(parsed).length, 'cells from localStorage')
                     setCells(parsed)
+                } else {
+                    console.log('No cells in localStorage either')
                 }
             } catch (error) {
                 console.error('Error loading cells from localStorage:', error)
@@ -74,7 +87,19 @@ export default function TestPage() {
         const saveData = async () => {
             if (useDatabase) {
                 try {
-                    await saveCells(cells)
+                    console.log('Attempting to save to database...')
+                    const success = await saveCells(cells)
+                    if (success) {
+                        console.log('Successfully saved to database')
+                    } else {
+                        console.warn('Failed to save to database, falling back to localStorage')
+                        // Fallback to localStorage
+                        try {
+                            localStorage.setItem(STORAGE_KEY, JSON.stringify(cells))
+                        } catch (e) {
+                            console.error('Error saving to localStorage:', e)
+                        }
+                    }
                 } catch (error) {
                     console.error('Error saving to database, falling back to localStorage:', error)
                     // Fallback to localStorage
@@ -86,6 +111,7 @@ export default function TestPage() {
                 }
             } else {
                 // Use localStorage as fallback
+                console.log('Database not available, saving to localStorage')
                 try {
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(cells))
                 } catch (error) {
@@ -125,6 +151,30 @@ export default function TestPage() {
         setIsAuthenticated(false)
         setShowPasswordPrompt(true)
         localStorage.removeItem('testPageAuth')
+    }
+
+    const handleRefresh = async () => {
+        setIsLoading(true)
+        const dbAvailable = await checkHealth()
+        setUseDatabase(dbAvailable)
+
+        if (dbAvailable) {
+            try {
+                const savedCells = await fetchCells()
+                if (Object.keys(savedCells).length > 0) {
+                    setCells(savedCells)
+                    alert(`Refreshed! Loaded ${Object.keys(savedCells).length} cells from database.`)
+                } else {
+                    alert('Database is empty. No cells found.')
+                }
+            } catch (error) {
+                console.error('Error refreshing:', error)
+                alert('Error refreshing from database. Check console for details.')
+            }
+        } else {
+            alert('Database is not available. Check if the server is running.')
+        }
+        setIsLoading(false)
     }
 
     const getCellKey = (row: number, col: number) => `${row}-${col}`
@@ -348,6 +398,9 @@ export default function TestPage() {
                                 ● Database
                             </span>
                         )}
+                        <button onClick={handleRefresh} className={styles.refreshButton} title="Refresh data from database">
+                            🔄 Refresh
+                        </button>
                         {isAuthenticated && (
                             <button onClick={handleLogout} className={styles.logoutButton}>
                                 Lock Editing

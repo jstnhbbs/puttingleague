@@ -48,6 +48,7 @@ db.exec(`
 // Get all cells
 app.get('/api/cells', (req, res) => {
     try {
+        console.log(`[${new Date().toISOString()}] GET /api/cells - Request from: ${req.headers.origin || req.headers.referer || 'unknown'}`);
         const stmt = db.prepare('SELECT cell_key, value, is_formula FROM cells');
         const rows = stmt.all();
 
@@ -59,6 +60,7 @@ app.get('/api/cells', (req, res) => {
             };
         });
 
+        console.log(`[${new Date().toISOString()}] Returning ${Object.keys(cells).length} cells`);
         res.json(cells);
     } catch (error) {
         console.error('Error fetching cells:', error);
@@ -96,11 +98,16 @@ app.post('/api/cells', (req, res) => {
 // Save multiple cells (batch update)
 app.post('/api/cells/batch', (req, res) => {
     try {
+        console.log(`[${new Date().toISOString()}] POST /api/cells/batch - Request from: ${req.headers.origin || req.headers.referer || 'unknown'}`);
         const { cells } = req.body;
 
         if (!cells || typeof cells !== 'object') {
+            console.error('Invalid request: cells object is required');
             return res.status(400).json({ error: 'cells object is required' });
         }
+
+        const cellCount = Object.keys(cells).length;
+        console.log(`Saving ${cellCount} cells to database...`);
 
         const stmt = db.prepare(`
       INSERT INTO cells (cell_key, value, is_formula, updated_at)
@@ -119,7 +126,8 @@ app.post('/api/cells/batch', (req, res) => {
 
         transaction(cells);
 
-        res.json({ success: true, count: Object.keys(cells).length });
+        console.log(`Successfully saved ${cellCount} cells`);
+        res.json({ success: true, count: cellCount });
     } catch (error) {
         console.error('Error saving cells:', error);
         res.status(500).json({ error: 'Failed to save cells' });
