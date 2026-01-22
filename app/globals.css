@@ -20,6 +20,8 @@ body {
   transition: background 0.3s ease;
 }
 
+/* Roboto font is applied via className in layout.tsx, not in font-family here */
+
 /* Light mode (default) */
 body {
   background: linear-gradient(135deg, #ffffff 0%, #faf8f3 50%, #f5e6d3 100%);

@@ -5,9 +5,6 @@ export interface Sheet {
   sheetUrl: string
 }
 
-// Main sheet URL for home page embed
-export const mainSheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQbJtP2iVNdFvBKQiZeMJIuiEsLY5M8mv3hcGFXXxJSinxSWWJaBdCtaNZWILdAiT3iOafQoDlpD95N/pubhtml?gid=348497959&single=true'
-
 export const sheets: Sheet[] = [
   {
     id: 'season1',

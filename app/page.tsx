@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import styles from './page.module.css'
-import { sheets, mainSheetUrl } from './data/sheets'
+import { sheets } from './data/sheets'
 import { SheetIframe } from './components/SheetIframe'
 import { Leaderboard } from './components/Leaderboard'
 
@@ -33,13 +33,6 @@ export default function Home() {
                             ))}
                         </div>
                     </div>
-                </div>
-                <div className={styles.sheetEmbed}>
-                    <SheetIframe
-                        src={mainSheetUrl}
-                        className={styles.sheetFrame}
-                        title="Putting League Main Sheet"
-                    />
                 </div>
             </div>
         </main>
