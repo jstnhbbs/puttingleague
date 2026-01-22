@@ -18,6 +18,7 @@ export function Leaderboard() {
     const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [useDatabase, setUseDatabase] = useState(false)
+    const [mounted, setMounted] = useState(false)
 
     // Helper to get cell key
     const getCellKey = (row: number, col: number): string => `${row}-${col}`
@@ -178,6 +179,8 @@ export function Leaderboard() {
     }
 
     useEffect(() => {
+        setMounted(true)
+
         const loadLeaderboard = async () => {
             try {
                 setIsLoading(true)
@@ -209,7 +212,8 @@ export function Leaderboard() {
         // Only refresh on page load, not automatically
     }, [])
 
-    if (isLoading) {
+    // Always show loading state during SSR to prevent hydration mismatch
+    if (!mounted || isLoading) {
         return (
             <div className={styles.leaderboard}>
                 <h3 className={styles.title}>Leaderboard</h3>
