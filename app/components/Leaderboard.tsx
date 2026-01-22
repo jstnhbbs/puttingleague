@@ -206,10 +206,7 @@ export function Leaderboard() {
         }
 
         loadLeaderboard()
-
-        // Refresh every 30 seconds
-        const interval = setInterval(loadLeaderboard, 30000)
-        return () => clearInterval(interval)
+        // Only refresh on page load, not automatically
     }, [])
 
     if (isLoading) {
