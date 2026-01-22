@@ -29,11 +29,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     setMounted(true)
-    
+
     // After mount, set the actual theme from localStorage or system preference
     if (typeof window !== 'undefined') {
       const savedTheme = localStorage.getItem('theme') as Theme | null
-      
+
       if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
         // User has a saved preference, use it
         setUserPreference(savedTheme)
