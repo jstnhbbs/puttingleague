@@ -15,13 +15,15 @@ const COLS = 7
 // Set your password here - change this to your desired password
 const EDIT_PASSWORD = 'admin123' // Change this to your password
 
-const STORAGE_KEY = 'testPageCells'
+// Get storage key for a specific season
+const getStorageKey = (seasonId: string) => `testPageCells_${seasonId}`
 
 interface TestPageContentProps {
     sheetTitle: string
+    seasonId: string
 }
 
-export default function TestPageContent({ sheetTitle }: TestPageContentProps) {
+export default function TestPageContent({ sheetTitle, seasonId }: TestPageContentProps) {
     const [cells, setCells] = useState<Record<string, Cell>>({})
     const [selectedCell, setSelectedCell] = useState<string | null>(null)
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
@@ -37,15 +39,15 @@ export default function TestPageContent({ sheetTitle }: TestPageContentProps) {
             setIsLoading(true)
 
             // First, try to use the database
-            console.log('Checking database availability...')
+            console.log(`Checking database availability for season ${seasonId}...`)
             const dbAvailable = await checkHealth()
             console.log('Database available:', dbAvailable)
             setUseDatabase(dbAvailable)
 
             if (dbAvailable) {
                 try {
-                    console.log('Loading cells from database...')
-                    const savedCells = await fetchCells()
+                    console.log(`Loading cells from database for season ${seasonId}...`)
+                    const savedCells = await fetchCells(seasonId)
                     if (Object.keys(savedCells).length > 0) {
                         console.log('Loaded', Object.keys(savedCells).length, 'cells from database')
                         setCells(savedCells)
@@ -69,7 +71,8 @@ export default function TestPageContent({ sheetTitle }: TestPageContentProps) {
 
         const loadFromLocalStorage = () => {
             try {
-                const savedCells = localStorage.getItem(STORAGE_KEY)
+                const storageKey = getStorageKey(seasonId)
+                const savedCells = localStorage.getItem(storageKey)
                 if (savedCells) {
                     const parsed = JSON.parse(savedCells)
                     console.log('Loaded', Object.keys(parsed).length, 'cells from localStorage')
@@ -83,24 +86,25 @@ export default function TestPageContent({ sheetTitle }: TestPageContentProps) {
         }
 
         loadCells()
-    }, [])
+    }, [seasonId])
 
     // Save cells to database or localStorage whenever they change
     useEffect(() => {
         if (Object.keys(cells).length === 0) return // Don't save empty state
 
         const saveData = async () => {
+            const storageKey = getStorageKey(seasonId)
             if (useDatabase) {
                 try {
-                    console.log('Attempting to save to database...')
-                    const success = await saveCells(cells)
+                    console.log(`Attempting to save to database for season ${seasonId}...`)
+                    const success = await saveCells(cells, seasonId)
                     if (success) {
                         console.log('Successfully saved to database')
                     } else {
                         console.warn('Failed to save to database, falling back to localStorage')
                         // Fallback to localStorage
                         try {
-                            localStorage.setItem(STORAGE_KEY, JSON.stringify(cells))
+                            localStorage.setItem(storageKey, JSON.stringify(cells))
                         } catch (e) {
                             console.error('Error saving to localStorage:', e)
                         }
@@ -109,7 +113,7 @@ export default function TestPageContent({ sheetTitle }: TestPageContentProps) {
                     console.error('Error saving to database, falling back to localStorage:', error)
                     // Fallback to localStorage
                     try {
-                        localStorage.setItem(STORAGE_KEY, JSON.stringify(cells))
+                        localStorage.setItem(storageKey, JSON.stringify(cells))
                     } catch (e) {
                         console.error('Error saving to localStorage:', e)
                     }
@@ -118,7 +122,7 @@ export default function TestPageContent({ sheetTitle }: TestPageContentProps) {
                 // Use localStorage as fallback
                 console.log('Database not available, saving to localStorage')
                 try {
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(cells))
+                    localStorage.setItem(storageKey, JSON.stringify(cells))
                 } catch (error) {
                     console.error('Error saving cells to localStorage:', error)
                 }
@@ -128,7 +132,7 @@ export default function TestPageContent({ sheetTitle }: TestPageContentProps) {
         // Debounce saves to avoid too many API calls
         const timeoutId = setTimeout(saveData, 500)
         return () => clearTimeout(timeoutId)
-    }, [cells, useDatabase])
+    }, [cells, useDatabase, seasonId])
 
     // Check for existing authentication on mount
     useEffect(() => {
@@ -175,12 +179,12 @@ export default function TestPageContent({ sheetTitle }: TestPageContentProps) {
 
         if (dbAvailable) {
             try {
-                const savedCells = await fetchCells()
+                const savedCells = await fetchCells(seasonId)
                 if (Object.keys(savedCells).length > 0) {
                     setCells(savedCells)
-                    alert(`Refreshed! Loaded ${Object.keys(savedCells).length} cells from database.`)
+                    alert(`Refreshed! Loaded ${Object.keys(savedCells).length} cells from database for ${seasonId}.`)
                 } else {
-                    alert('Database is empty. No cells found.')
+                    alert(`Database is empty for ${seasonId}. No cells found.`)
                 }
             } catch (error) {
                 console.error('Error refreshing:', error)

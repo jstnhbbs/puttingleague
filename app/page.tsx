@@ -5,6 +5,7 @@ import styles from './page.module.css'
 import { sheets } from './data/sheets'
 import { SheetIframe } from './components/SheetIframe'
 import { Leaderboard } from './components/Leaderboard'
+import { PlayoffBracket } from './components/PlayoffBracket'
 
 export default function Home() {
     // Reverse the sheets array to display in reverse order
@@ -18,6 +19,7 @@ export default function Home() {
                 <div className={styles.twoColumn}>
                     <div className={styles.leftColumn}>
                         <Leaderboard />
+                        <PlayoffBracket />
                     </div>
                     <div className={styles.rightColumn}>
                         <div className={styles.grid}>

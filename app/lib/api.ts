@@ -14,15 +14,15 @@ export interface CellsResponse {
     [key: string]: Cell
 }
 
-// Fetch all cells from the server
-export async function fetchCells(): Promise<CellsResponse> {
+// Fetch all cells from the server for a specific season
+export async function fetchCells(seasonId: string = 'season6'): Promise<CellsResponse> {
     try {
-        console.log('Fetching cells from:', `${API_URL}/api/cells`)
+        console.log('Fetching cells from:', `${API_URL}/api/cells?season=${seasonId}`)
         // Add timeout to prevent hanging
         const controller = new AbortController()
         const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
 
-        const response = await fetch(`${API_URL}/api/cells`, {
+        const response = await fetch(`${API_URL}/api/cells?season=${encodeURIComponent(seasonId)}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -58,8 +58,8 @@ export async function fetchCells(): Promise<CellsResponse> {
     }
 }
 
-// Save a single cell to the server
-export async function saveCell(cellKey: string, cell: Cell): Promise<boolean> {
+// Save a single cell to the server for a specific season
+export async function saveCell(cellKey: string, cell: Cell, seasonId: string = 'season6'): Promise<boolean> {
     try {
         const response = await fetch(`${API_URL}/api/cells`, {
             method: 'POST',
@@ -70,6 +70,7 @@ export async function saveCell(cellKey: string, cell: Cell): Promise<boolean> {
                 cellKey,
                 value: cell.value,
                 isFormula: cell.isFormula,
+                seasonId,
             }),
         })
         return response.ok
@@ -79,18 +80,18 @@ export async function saveCell(cellKey: string, cell: Cell): Promise<boolean> {
     }
 }
 
-// Save multiple cells to the server (batch)
-export async function saveCells(cells: Record<string, Cell>): Promise<boolean> {
+// Save multiple cells to the server (batch) for a specific season
+export async function saveCells(cells: Record<string, Cell>, seasonId: string = 'season6'): Promise<boolean> {
     try {
         const cellCount = Object.keys(cells).length
-        console.log(`Saving ${cellCount} cells to:`, `${API_URL}/api/cells/batch`)
+        console.log(`Saving ${cellCount} cells to:`, `${API_URL}/api/cells/batch for season ${seasonId}`)
 
         const response = await fetch(`${API_URL}/api/cells/batch`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ cells }),
+            body: JSON.stringify({ cells, seasonId }),
         })
 
         if (!response.ok) {
@@ -121,10 +122,10 @@ export async function saveCells(cells: Record<string, Cell>): Promise<boolean> {
     }
 }
 
-// Delete a cell from the server
-export async function deleteCell(cellKey: string): Promise<boolean> {
+// Delete a cell from the server for a specific season
+export async function deleteCell(cellKey: string, seasonId: string = 'season6'): Promise<boolean> {
     try {
-        const response = await fetch(`${API_URL}/api/cells/${cellKey}`, {
+        const response = await fetch(`${API_URL}/api/cells/${cellKey}?season=${encodeURIComponent(seasonId)}`, {
             method: 'DELETE',
         })
         return response.ok

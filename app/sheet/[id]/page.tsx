@@ -24,28 +24,7 @@ export default function SheetPage({ params }: { params: { id: string } }) {
     )
   }
 
-  // For Season 6, show the test page content instead of the Google Sheet
-  if (params.id === 'season6') {
-    return <TestPageContent sheetTitle={sheet.title} />
-  }
-
-  const embedUrl = getEmbedUrl(sheet.sheetUrl)
-
-  return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <Link href="/" className={styles.backLink}>
-          ← Back to Home
-        </Link>
-        <h1 className={styles.title}>{sheet.title}</h1>
-      </div>
-      <div className={styles.sheetContainer}>
-        <SheetIframe
-          src={embedUrl}
-          className={styles.sheetFrame}
-          title={sheet.title}
-        />
-      </div>
-    </div>
-  )
+  // Show editable table for all seasons (you can customize which seasons use the table)
+  // For now, all seasons will use the editable table
+  return <TestPageContent sheetTitle={sheet.title} seasonId={params.id} />
 }
