@@ -17,20 +17,21 @@ export default function RulesPage() {
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>General Rules</h2>
             <ul className={styles.list}>
-              <li>Each participant must follow the official putting guidelines</li>
-              <li>All putts must be taken from the designated starting position</li>
-              <li>Participants are responsible for accurate score reporting</li>
-              <li>Respectful conduct is required at all times</li>
+              <li>Each season consists of 10 weeks.</li>
+              <li>Each week consists of 4 rounds of 10 putts each from distances of 20, 25, 30, and 35 feet and 1 Bonus Round.</li>
+              <li>Each week, one putting distance is replace with an Obstacle Putt. The Obstacle Putt is a putt determined by a wheel spin to determine a distance and putt style for the week.</li>
+              <li>Each week, all players draw a card that can positively or negatively affect their score for the week.</li>
+              <li>Cards are not allowed to be used in the Bonus Round.</li>
+              <li>Respectful conduct is required at all times.</li>
             </ul>
           </section>
 
           <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>Scoring</h2>
+            <h2 className={styles.sectionTitle}>Bonus Round</h2>
             <ul className={styles.list}>
-              <li>Scores are recorded on the official scorecards</li>
-              <li>Each round consists of 18 holes</li>
-              <li>The lowest total score wins</li>
-              <li>Ties will be decided by a playoff round</li>
+              <li>The Bonus Round putt is a putt determined on and voted on by the chat.</li>
+              <li>The maximum number of points availabe in the Bonus Round must be 30 points. </li>
+              <li>The number of points awarded for the Bonus Round putt is determined by the chat.</li>
             </ul>
           </section>
 

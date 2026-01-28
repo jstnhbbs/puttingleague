@@ -11,9 +11,27 @@ interface Cell {
 }
 
 const ROWS = 12
-const COLS = 7
 // Set your password here - change this to your desired password
 const EDIT_PASSWORD = 'admin123' // Change this to your password
+
+// Get column configuration based on season
+const getColumnConfig = (seasonId: string) => {
+    // Seasons 1-4 have 6 columns (without Tyler)
+    // Seasons 5-6 have 7 columns (with Tyler)
+    const isEarlySeason = ['season1', 'season2', 'season3', 'season4'].includes(seasonId)
+
+    if (isEarlySeason) {
+        return {
+            cols: 6,
+            columnNames: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Brad']
+        }
+    } else {
+        return {
+            cols: 7,
+            columnNames: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Brad', 'Tyler']
+        }
+    }
+}
 
 // Get storage key for a specific season
 const getStorageKey = (seasonId: string) => `testPageCells_${seasonId}`
@@ -32,6 +50,9 @@ export default function TestPageContent({ sheetTitle, seasonId }: TestPageConten
     const [passwordError, setPasswordError] = useState<string>('')
     const [isLoading, setIsLoading] = useState<boolean>(true)
     const [useDatabase, setUseDatabase] = useState<boolean>(false)
+
+    // Get column configuration for this season
+    const { cols: COLS, columnNames } = getColumnConfig(seasonId)
 
     // Check if database is available and load cells
     useEffect(() => {
@@ -363,7 +384,6 @@ export default function TestPageContent({ sheetTitle, seasonId }: TestPageConten
     }
 
     // Customize column headers here
-    const columnNames = ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Brad', 'Tyler']
     const getColumnLetter = (col: number) => columnNames[col] || `Col ${col + 1}`
 
     // Customize row headers here
