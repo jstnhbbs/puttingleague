@@ -141,14 +141,21 @@ try {
         const seasonRow = getSeasonId.get(season.id);
         if (seasonRow) {
             const playerList = EARLY_SEASONS.includes(season.id) ? PLAYER_NAMES.early : PLAYER_NAMES.late;
+            console.log(`Setting up ${season.id} with ${playerList.length} players: ${playerList.join(', ')}`);
             playerList.forEach((playerName, colIndex) => {
                 const playerRow = getPlayerId.get(playerName);
                 if (playerRow) {
                     insertSeasonPlayer.run(seasonRow.id, playerRow.id, colIndex);
+                    console.log(`  - Added ${playerName} to ${season.id} at position ${colIndex}`);
+                } else {
+                    console.warn(`  - Player ${playerName} not found in database for ${season.id}`);
                 }
             });
+        } else {
+            console.warn(`Season ${season.id} not found in database after insert`);
         }
     });
+    console.log('Season-player relationships initialized');
 } catch (error) {
     console.error('Error initializing players/seasons:', error);
 }
@@ -177,6 +184,35 @@ function cellKeyToRelational(cellKey, seasonId) {
 // Helper function to convert relational data to cell_key format
 function relationalToCellKey(row, col) {
     return `${row}-${col}`;
+}
+
+// Helper function to ensure season-player relationships exist
+function ensureSeasonPlayerRelationships(seasonId) {
+    const seasonRow = db.prepare('SELECT id FROM seasons WHERE season_id = ?').get(seasonId);
+    if (!seasonRow) {
+        console.error(`Season ${seasonId} not found`);
+        return false;
+    }
+
+    const playerList = EARLY_SEASONS.includes(seasonId) ? PLAYER_NAMES.early : PLAYER_NAMES.late;
+    const getPlayerId = db.prepare('SELECT id FROM players WHERE name = ?');
+    const insertSeasonPlayer = db.prepare('INSERT OR IGNORE INTO season_players (season_id, player_id, display_order) VALUES (?, ?, ?)');
+    const checkRelationship = db.prepare('SELECT id FROM season_players WHERE season_id = ? AND player_id = ?');
+
+    let allRelationshipsExist = true;
+    playerList.forEach((playerName, colIndex) => {
+        const playerRow = getPlayerId.get(playerName);
+        if (playerRow) {
+            const existing = checkRelationship.get(seasonRow.id, playerRow.id);
+            if (!existing) {
+                console.log(`Creating missing relationship: ${seasonId} <-> ${playerName}`);
+                insertSeasonPlayer.run(seasonRow.id, playerRow.id, colIndex);
+                allRelationshipsExist = false;
+            }
+        }
+    });
+
+    return allRelationshipsExist;
 }
 
 // Get all cells for a specific season (converted from relational to cell format for backward compatibility)
@@ -268,6 +304,9 @@ app.post('/api/cells', (req, res) => {
             return res.status(400).json({ error: 'Invalid cellKey format' });
         }
 
+        // Ensure season-player relationships exist
+        ensureSeasonPlayerRelationships(seasonId);
+
         // Get IDs
         const seasonRow = db.prepare('SELECT id FROM seasons WHERE season_id = ?').get(seasonId);
         const playerRow = db.prepare('SELECT id FROM players WHERE name = ?').get(rel.playerName);
@@ -339,9 +378,14 @@ app.post('/api/cells/batch', (req, res) => {
         // Get season and player IDs
         const seasonRow = db.prepare('SELECT id FROM seasons WHERE season_id = ?').get(seasonId);
         if (!seasonRow) {
-            return res.status(400).json({ error: 'Invalid season' });
+            console.error(`[${seasonId}] Season not found in database`);
+            return res.status(400).json({ error: `Invalid season: ${seasonId}` });
         }
         const seasonDbId = seasonRow.id;
+        console.log(`[${seasonId}] Using season database ID: ${seasonDbId}`);
+
+        // Ensure season-player relationships exist
+        ensureSeasonPlayerRelationships(seasonId);
 
         // Prepare statements
         const insertScore = db.prepare(`
@@ -369,10 +413,16 @@ app.post('/api/cells/batch', (req, res) => {
 
             for (const [cellKey, cell] of Object.entries(cells)) {
                 const rel = cellKeyToRelational(cellKey, seasonId);
-                if (!rel) continue;
+                if (!rel) {
+                    console.warn(`[${seasonId}] Invalid cellKey format: ${cellKey}`);
+                    continue;
+                }
 
                 const playerRow = getPlayerId.get(rel.playerName);
-                if (!playerRow) continue;
+                if (!playerRow) {
+                    console.warn(`[${seasonId}] Player not found: ${rel.playerName} for cellKey: ${cellKey}`);
+                    continue;
+                }
 
                 if (rel.week !== null) {
                     // Regular score - mark player for recalculation
@@ -430,10 +480,14 @@ app.post('/api/cells/batch', (req, res) => {
             }
         });
 
-        transaction(cells, seasonId, seasonDbId);
-
-        console.log(`Successfully saved ${cellCount} cells for season ${seasonId}`);
-        res.json({ success: true, count: cellCount });
+        try {
+            transaction(cells, seasonId, seasonDbId);
+            console.log(`Successfully saved ${cellCount} cells for season ${seasonId}`);
+            res.json({ success: true, count: cellCount });
+        } catch (error) {
+            console.error(`Error in transaction for season ${seasonId}:`, error);
+            res.status(500).json({ error: `Failed to save cells: ${error.message}` });
+        }
     } catch (error) {
         console.error('Error saving cells:', error);
         res.status(500).json({ error: 'Failed to save cells' });
@@ -488,6 +542,38 @@ app.delete('/api/cells/:cellKey', (req, res) => {
 app.get('/api/health', (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Debug endpoint to check season setup
+app.get('/api/debug/season/:seasonId', (req, res) => {
+    try {
+        const { seasonId } = req.params;
+        const seasonRow = db.prepare('SELECT * FROM seasons WHERE season_id = ?').get(seasonId);
+
+        if (!seasonRow) {
+            return res.status(404).json({ error: 'Season not found' });
+        }
+
+        const players = db.prepare(`
+            SELECT p.name, sp.display_order
+            FROM season_players sp
+            JOIN players p ON sp.player_id = p.id
+            WHERE sp.season_id = ?
+            ORDER BY sp.display_order
+        `).all(seasonRow.id);
+
+        const scoresCount = db.prepare('SELECT COUNT(*) as count FROM scores WHERE season_id = ?').get(seasonRow.id);
+
+        res.json({
+            season: seasonRow,
+            players: players,
+            scoresCount: scoresCount.count,
+            expectedPlayers: EARLY_SEASONS.includes(seasonId) ? PLAYER_NAMES.early : PLAYER_NAMES.late
+        });
+    } catch (error) {
+        console.error('Error in debug endpoint:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
 app.listen(PORT, '0.0.0.0', () => {
