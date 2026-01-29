@@ -2,8 +2,8 @@
 // Change this to your Mac mini's IP address or domain
 // For local development: 'http://localhost:3001'
 // For production: 'http://100.72.185.61:3001' or your domain
-// Or use ngrok: 'https://crop-tubes-fioricet-quantities.trycloudflare.com '
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://crop-tubes-fioricet-quantities.trycloudflare.com '
+// Or use ngrok: 'https://scene-tamil-supervision-frost.trycloudflare.com'
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://scene-tamil-supervision-frost.trycloudflare.com'
 
 export interface Cell {
     value: string
