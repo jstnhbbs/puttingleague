@@ -15,7 +15,8 @@ app.use(cors({
         /\.github\.io$/, // Allow any GitHub Pages subdomain
         /\.ngrok-free\.app$/, // Allow any ngrok free tier URL
         /\.ngrok\.io$/, // Allow any ngrok paid tier URL
-        /\.ngrok-app\.dev$/ // Allow ngrok app dev URLs
+        /\.ngrok-app\.dev$/, // Allow ngrok app dev URLs
+        /\.trycloudflare\.com$/ // Cloudflare tunnel
     ],
     credentials: true
 }));

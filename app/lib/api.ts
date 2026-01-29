@@ -2,8 +2,8 @@
 // Change this to your Mac mini's IP address or domain
 // For local development: 'http://localhost:3001'
 // For production: 'http://100.72.185.61:3001' or your domain
-// Or use ngrok: 'https://recreational-independence-merely-barriers.trycloudflare.com'
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://recreational-independence-merely-barriers.trycloudflare.com'
+// Or use ngrok: 'https://rising-deposits-nicole-prague.trycloudflare.com'
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://rising-deposits-nicole-prague.trycloudflare.com'
 
 export interface Cell {
     value: string
@@ -170,8 +170,10 @@ export async function checkHealth(): Promise<boolean> {
     } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') {
             console.warn('Health check timed out after 5 seconds')
+        } else if (error instanceof TypeError && (error.message.includes('fetch') || error.message.includes('NetworkError'))) {
+            console.warn('Health check: API server unreachable. Check that the server is running and NEXT_PUBLIC_API_URL is correct:', API_URL)
         } else {
-            console.warn('Health check error:', error)
+            console.warn('Health check error:', error instanceof Error ? error.message : error)
         }
         return false
     }
