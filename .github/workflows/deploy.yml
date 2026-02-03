@@ -40,6 +40,8 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          GITHUB_PAGES: '1'
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
