@@ -1,9 +1,7 @@
 // API configuration
-// Change this to your Mac mini's IP address or domain
-// For local development: 'http://localhost:3001'
-// For production: 'http://100.72.185.61:3001' or your domain
-// Or use ngrok: 'https://sec-watson-physicians-marine.trycloudflare.com'
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://sec-watson-physicians-marine.trycloudflare.com'
+// When empty, uses same-origin (e.g. Vercel: /api/*). Set for external API (Express + tunnel).
+// e.g. NEXT_PUBLIC_API_URL=http://localhost:3001 or https://your-tunnel.trycloudflare.com
+export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? ''
 
 export interface Cell {
     value: string

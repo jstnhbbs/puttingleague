@@ -195,6 +195,50 @@
   color: #B79953;
 }
 
+/* 2 lowest scores in each column */
+.cellHighlightLow {
+  background: rgba(220, 53, 69, 0.25) !important;
+  border-color: #dc3545 !important;
+}
+
+.cellHighlightLow .cellContent {
+  background: rgba(220, 53, 69, 0.2);
+  font-weight: 600;
+  color: #b02a37;
+}
+
+[data-theme='dark'] .cellHighlightLow {
+  background: rgba(220, 53, 69, 0.35) !important;
+  border-color: #e4606d !important;
+}
+
+[data-theme='dark'] .cellHighlightLow .cellContent {
+  background: rgba(220, 53, 69, 0.25);
+  color: #f5a2a9;
+}
+
+/* Highest score in each row */
+.cellHighlightHigh {
+  background: rgba(25, 135, 84, 0.25) !important;
+  border-color: #198754 !important;
+}
+
+.cellHighlightHigh .cellContent {
+  background: rgba(25, 135, 84, 0.2);
+  font-weight: 600;
+  color: #0f5132;
+}
+
+[data-theme='dark'] .cellHighlightHigh {
+  background: rgba(25, 135, 84, 0.35) !important;
+  border-color: #2ea96a !important;
+}
+
+[data-theme='dark'] .cellHighlightHigh .cellContent {
+  background: rgba(25, 135, 84, 0.25);
+  color: #75c997;
+}
+
 [data-theme='dark'] .sumCell {
   color: #B79953;
 }

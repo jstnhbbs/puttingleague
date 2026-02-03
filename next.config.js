@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
+  // Static export for GitHub Pages; omit for Vercel (so API routes work)
+  ...(process.env.GITHUB_PAGES === '1' ? { output: 'export' } : {}),
   images: {
     unoptimized: true,
   },

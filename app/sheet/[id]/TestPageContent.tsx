@@ -383,6 +383,35 @@ export default function TestPageContent({ sheetTitle, seasonId }: TestPageConten
         setSelectedCell(null)
     }
 
+    // Highlight: 2 lowest scores per column (red), highest score per row (green). Only score rows 0-9.
+    const getNumericValue = (r: number, c: number): number | null => {
+        if (r < 0 || r > 9) return null
+        const v = getCellValue(r, c)
+        const n = parseFloat(v)
+        return Number.isNaN(n) ? null : n
+    }
+    const lowInColumn = new Set<string>()
+    for (let c = 0; c < COLS; c++) {
+        const entries: { row: number; value: number }[] = []
+        for (let r = 0; r <= 9; r++) {
+            const n = getNumericValue(r, c)
+            if (n !== null) entries.push({ row: r, value: n })
+        }
+        entries.sort((a, b) => (a.value !== b.value ? a.value - b.value : a.row - b.row))
+        entries.slice(0, 2).forEach(({ row }) => lowInColumn.add(getCellKey(row, c)))
+    }
+    const highInRow = new Set<string>()
+    for (let r = 0; r <= 9; r++) {
+        const entries: { col: number; value: number }[] = []
+        for (let c = 0; c < COLS; c++) {
+            const n = getNumericValue(r, c)
+            if (n !== null) entries.push({ col: c, value: n })
+        }
+        if (entries.length === 0) continue
+        const maxVal = Math.max(...entries.map((e) => e.value))
+        entries.filter((e) => e.value === maxVal).forEach(({ col }) => highInRow.add(getCellKey(r, col)))
+    }
+
     // Customize column headers here
     const getColumnLetter = (col: number) => columnNames[col] || `Col ${col + 1}`
 
@@ -464,9 +493,12 @@ export default function TestPageContent({ sheetTitle, seasonId }: TestPageConten
                                                 : (cell?.value || ''))
                                         const editValue = cell?.value || ''
                                         const isSelected = selectedCell === key
+                                        const isHigh = highInRow.has(key)
+                                        const isLow = lowInColumn.has(key)
+                                        const highlightClass = isHigh ? styles.cellHighlightHigh : isLow ? styles.cellHighlightLow : ''
 
                                         return (
-                                            <td key={col} className={`${styles.cell} ${isCalculatedRow ? styles.sumRow : ''} ${!isAuthenticated ? styles.viewOnly : ''}`}>
+                                            <td key={col} className={`${styles.cell} ${isCalculatedRow ? styles.sumRow : ''} ${!isAuthenticated ? styles.viewOnly : ''} ${highlightClass}`}>
                                                 {isSelected && !isCalculatedRow && isAuthenticated ? (
                                                     <input
                                                         type="text"
