@@ -38,6 +38,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Static export cannot include API routes; hide them so the build produces only static pages
+      - name: Hide API routes for static export
+        run: mv app/api app/_api_disabled
+
       - name: Build
         run: npm run build
         env:
