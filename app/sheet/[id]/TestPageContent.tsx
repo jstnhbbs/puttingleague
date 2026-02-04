@@ -34,7 +34,7 @@ const getColumnConfig = (seasonId: string) => {
     }
     return {
         cols: 7,
-        columnNames: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Brad', 'Tyler']
+        columnNames: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Tyler', 'Brad',]
     }
 }
 

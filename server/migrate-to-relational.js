@@ -26,7 +26,7 @@ const db = new Database(dbPath);
 // Player names mapping (column index to name)
 const PLAYER_NAMES = {
     early: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Brad'], // Seasons 1-4
-    late: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Brad', 'Tyler'] // Seasons 5-6
+    late: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Tyler', 'Brad'] // Seasons 5-6
 };
 
 const EARLY_SEASONS = ['season1', 'season2', 'season3', 'season4'];
