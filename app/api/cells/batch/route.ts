@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import {
   getDb,
   isTursoConfigured,
-  EARLY_SEASONS,
-  PLAYER_NAMES,
+  getPlayerListForSeason,
   cellKeyToRelational,
   type DbRow,
 } from '../../../lib/db'
@@ -12,9 +11,7 @@ function ensureSeasonPlayerRelationships(
   db: ReturnType<typeof getDb>,
   seasonId: string
 ): Promise<void> {
-  const playerList = EARLY_SEASONS.includes(seasonId)
-    ? [...PLAYER_NAMES.early]
-    : [...PLAYER_NAMES.late]
+  const playerList = [...getPlayerListForSeason(seasonId)]
 
   return db.execute('SELECT id FROM seasons WHERE season_id = ?', [seasonId]).then((r) => {
     const seasonRow = (r.rows as DbRow[])[0]

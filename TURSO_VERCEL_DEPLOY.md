@@ -99,12 +99,34 @@ The repo is set up so that:
    ```
 3. The app will use `/api` (same origin); no separate Express server or tunnel needed.
 
-## 7. Migrating existing data (optional)
+## 7. Migrating existing data (SQLite → Turso)
 
-If you have data in your current SQLite file:
+If you have data in `server/data/puttingleague.db` and want to copy it to Turso:
 
-1. Export from SQLite (e.g. `sqlite3 data/puttingleague.db .dump`), or use a small script that reads from SQLite and inserts into Turso via `@libsql/client`.
-2. Run the migration once against your Turso DB (same schema and tables).
+1. **Turso schema must already be applied** (step 2 above). If the DB is brand new, run:
+   ```bash
+   turso db shell puttingleague < server/turso-schema.sql
+   ```
+2. **Set Turso env vars** (e.g. in project root `.env.local`):
+   ```env
+   TURSO_DATABASE_URL=libsql://...
+   TURSO_AUTH_TOKEN=...
+   ```
+3. **Install server deps and run the migration** from the **server** directory (so `better-sqlite3` and `@libsql/client` are found):
+   ```bash
+   cd server
+   npm install
+   node migrate-sqlite-to-turso.js
+   ```
+   The script reads from `server/data/puttingleague.db` and writes to Turso. It loads `TURSO_*` from the project root `.env.local` if that file exists.
+
+   If you prefer to set env vars manually:
+   ```bash
+   cd server
+   export TURSO_DATABASE_URL="..."
+   export TURSO_AUTH_TOKEN="..."
+   node migrate-sqlite-to-turso.js
+   ```
 
 ## Summary
 

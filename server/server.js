@@ -36,7 +36,8 @@ const db = new Database(dbPath);
 // Player names mapping (column index to name)
 const PLAYER_NAMES = {
     early: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Brad'], // Seasons 1-4
-    late: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Brad', 'Tyler'] // Seasons 5-6
+    late: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Brad', 'Tyler'], // Season 5
+    season6: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Brad', 'Tyler', 'Player 8'] // Season 6
 };
 
 const EARLY_SEASONS = ['season1', 'season2', 'season3', 'season4'];
@@ -114,7 +115,7 @@ db.exec(`
 try {
     // Insert players
     const insertPlayer = db.prepare('INSERT OR IGNORE INTO players (name, display_order) VALUES (?, ?)');
-    const allPlayers = [...new Set([...PLAYER_NAMES.early, ...PLAYER_NAMES.late])];
+    const allPlayers = [...new Set([...PLAYER_NAMES.early, ...PLAYER_NAMES.late, ...PLAYER_NAMES.season6])];
     allPlayers.forEach((name, index) => {
         insertPlayer.run(name, index);
     });
@@ -141,7 +142,7 @@ try {
     seasons.forEach(season => {
         const seasonRow = getSeasonId.get(season.id);
         if (seasonRow) {
-            const playerList = EARLY_SEASONS.includes(season.id) ? PLAYER_NAMES.early : PLAYER_NAMES.late;
+            const playerList = season.id === 'season6' ? PLAYER_NAMES.season6 : (EARLY_SEASONS.includes(season.id) ? PLAYER_NAMES.early : PLAYER_NAMES.late);
             console.log(`Setting up ${season.id} with ${playerList.length} players: ${playerList.join(', ')}`);
             playerList.forEach((playerName, colIndex) => {
                 const playerRow = getPlayerId.get(playerName);
@@ -169,7 +170,7 @@ function cellKeyToRelational(cellKey, seasonId) {
 
     if (isNaN(row) || isNaN(col)) return null;
 
-    const playerList = EARLY_SEASONS.includes(seasonId) ? PLAYER_NAMES.early : PLAYER_NAMES.late;
+    const playerList = seasonId === 'season6' ? PLAYER_NAMES.season6 : (EARLY_SEASONS.includes(seasonId) ? PLAYER_NAMES.early : PLAYER_NAMES.late);
     if (col >= playerList.length) return null;
 
     return {
@@ -195,7 +196,7 @@ function ensureSeasonPlayerRelationships(seasonId) {
         return false;
     }
 
-    const playerList = EARLY_SEASONS.includes(seasonId) ? PLAYER_NAMES.early : PLAYER_NAMES.late;
+    const playerList = seasonId === 'season6' ? PLAYER_NAMES.season6 : (EARLY_SEASONS.includes(seasonId) ? PLAYER_NAMES.early : PLAYER_NAMES.late);
     const getPlayerId = db.prepare('SELECT id FROM players WHERE name = ?');
     const insertSeasonPlayer = db.prepare('INSERT OR IGNORE INTO season_players (season_id, player_id, display_order) VALUES (?, ?, ?)');
     const checkRelationship = db.prepare('SELECT id FROM season_players WHERE season_id = ? AND player_id = ?');
@@ -231,7 +232,7 @@ app.get('/api/cells', (req, res) => {
         }
 
         const seasonDbId = seasonRow.id;
-        const playerList = EARLY_SEASONS.includes(seasonId) ? PLAYER_NAMES.early : PLAYER_NAMES.late;
+        const playerList = seasonId === 'season6' ? PLAYER_NAMES.season6 : (EARLY_SEASONS.includes(seasonId) ? PLAYER_NAMES.early : PLAYER_NAMES.late);
         const cells = {};
 
         // Get all scores for this season
@@ -569,7 +570,7 @@ app.get('/api/debug/season/:seasonId', (req, res) => {
             season: seasonRow,
             players: players,
             scoresCount: scoresCount.count,
-            expectedPlayers: EARLY_SEASONS.includes(seasonId) ? PLAYER_NAMES.early : PLAYER_NAMES.late
+            expectedPlayers: seasonId === 'season6' ? PLAYER_NAMES.season6 : (EARLY_SEASONS.includes(seasonId) ? PLAYER_NAMES.early : PLAYER_NAMES.late)
         });
     } catch (error) {
         console.error('Error in debug endpoint:', error);

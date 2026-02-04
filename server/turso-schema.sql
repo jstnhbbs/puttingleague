@@ -61,8 +61,8 @@ CREATE INDEX IF NOT EXISTS idx_season_players_season ON season_players(season_id
 CREATE INDEX IF NOT EXISTS idx_season_players_player ON season_players(player_id);
 CREATE INDEX IF NOT EXISTS idx_calculated_scores_season_player ON calculated_scores(season_id, player_id);
 
--- Seed players
-INSERT OR IGNORE INTO players (name, display_order) VALUES ('Hunter', 0), ('Trevor', 1), ('Konner', 2), ('Silas', 3), ('Jason', 4), ('Brad', 5), ('Tyler', 6);
+-- Seed players (Season 6 has 8; others use subset)
+INSERT OR IGNORE INTO players (name, display_order) VALUES ('Hunter', 0), ('Trevor', 1), ('Konner', 2), ('Silas', 3), ('Jason', 4), ('Brad', 5), ('Tyler', 6), ('Player 8', 7);
 
 -- Seed seasons
 INSERT OR IGNORE INTO seasons (season_id, title, description) VALUES
@@ -73,10 +73,13 @@ INSERT OR IGNORE INTO seasons (season_id, title, description) VALUES
   ('season5', 'Season 5', '🏆 Trevor Staub'),
   ('season6', 'Season 6', 'View Season 6');
 
--- Season–player links (seasons 1–4: 6 players; 5–6: 7 players)
+-- Season–player links (seasons 1–4: 6 players; season5: 7; season6: 8)
 INSERT OR IGNORE INTO season_players (season_id, player_id, display_order)
 SELECT s.id, p.id, p.display_order FROM seasons s, players p
 WHERE s.season_id IN ('season1','season2','season3','season4') AND p.name != 'Tyler'
 UNION ALL
 SELECT s.id, p.id, p.display_order FROM seasons s, players p
-WHERE s.season_id IN ('season5','season6');
+WHERE s.season_id = 'season5' AND p.name != 'Player 8'
+UNION ALL
+SELECT s.id, p.id, p.display_order FROM seasons s, players p
+WHERE s.season_id = 'season6';

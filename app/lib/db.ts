@@ -8,7 +8,8 @@ import { createClient, type Client } from '@libsql/client'
 const EARLY_SEASONS = ['season1', 'season2', 'season3', 'season4']
 const PLAYER_NAMES = {
   early: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Brad'],
-  late: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Brad', 'Tyler'],
+  late: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Tyler', 'Brad'],
+  season6: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Graham', 'Tyler', 'Brad'],
 } as const
 
 let client: Client | null = null
@@ -27,6 +28,13 @@ export function getDb(): Client {
 
 export function isTursoConfigured(): boolean {
   return Boolean(process.env.TURSO_DATABASE_URL && process.env.TURSO_AUTH_TOKEN)
+}
+
+/** Returns the list of player names for a season (for API routes / display order). */
+export function getPlayerListForSeason(seasonId: string): readonly string[] {
+  if (seasonId === 'season6') return PLAYER_NAMES.season6
+  if (EARLY_SEASONS.includes(seasonId)) return PLAYER_NAMES.early
+  return PLAYER_NAMES.late
 }
 
 export { EARLY_SEASONS, PLAYER_NAMES }
@@ -48,9 +56,12 @@ export function cellKeyToRelational(
   const row = parseInt(rowStr, 10)
   const col = parseInt(colStr, 10)
   if (Number.isNaN(row) || Number.isNaN(col)) return null
-  const playerList = EARLY_SEASONS.includes(seasonId)
-    ? PLAYER_NAMES.early
-    : PLAYER_NAMES.late
+  const playerList =
+    seasonId === 'season6'
+      ? PLAYER_NAMES.season6
+      : EARLY_SEASONS.includes(seasonId)
+        ? PLAYER_NAMES.early
+        : PLAYER_NAMES.late
   if (col >= playerList.length) return null
   return {
     row,
