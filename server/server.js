@@ -37,7 +37,7 @@ const db = new Database(dbPath);
 const PLAYER_NAMES = {
     early: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Brad'], // Seasons 1-4
     late: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Brad', 'Tyler'], // Season 5
-    season6: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Brad', 'Tyler', 'Graham'] // Season 6
+    season6: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Graham', 'Tyler', 'Brad'] // Season 6
 };
 
 const EARLY_SEASONS = ['season1', 'season2', 'season3', 'season4'];

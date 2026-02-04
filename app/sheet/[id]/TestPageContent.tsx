@@ -29,7 +29,7 @@ const getColumnConfig = (seasonId: string) => {
     if (seasonId === 'season6') {
         return {
             cols: 8,
-            columnNames: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Brad', 'Tyler', 'Graham']
+            columnNames: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Graham', 'Tyler','Brad']
         }
     }
     return {
