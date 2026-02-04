@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { fetchCells, checkHealth, type Cell } from '../lib/api'
 import styles from './PlayoffBracket.module.css'
 
-const COLUMN_NAMES = ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Brad', 'Tyler', 'Player 8']
+const COLUMN_NAMES = ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Brad', 'Tyler', 'Graham']
 const COLS = 8
 const ROW_12_INDEX = 11 // Row 12 is index 11 (0-based)
 
