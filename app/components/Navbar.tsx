@@ -24,6 +24,12 @@ export function Navbar() {
             Home
           </Link>
           <Link
+            href="/gamebreaker"
+            className={`${styles.navLink} ${pathname === '/gamebreaker' ? styles.active : ''}`}
+          >
+            GameBreaker Cards
+          </Link>
+          <Link
             href="/rules"
             className={`${styles.navLink} ${pathname === '/rules' ? styles.active : ''}`}
           >
