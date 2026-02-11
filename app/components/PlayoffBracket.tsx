@@ -222,64 +222,75 @@ export function PlayoffBracket() {
         // Only refresh on page load, not automatically
     }, [])
 
-    // Generate bracket structure based on template
+    // Generate bracket structure - 8-team bracket with 4 rounds
     const generateBracket = (): BracketGame[] => {
-        if (leaderboard.length < 7) {
+        if (leaderboard.length < 8) {
             return []
         }
 
         const games: BracketGame[] = []
         
-        // Play-In Round: 6th vs 7th
+        // Round 1:
+        // Game 1: 5 seed vs 8 seed
         games.push({
-            id: 'playin-g1',
-            round: 0, // Play-In is round 0
+            id: 'r1-g1',
+            round: 1,
+            team1: leaderboard[4]?.name || '5th Seed',
+            team2: leaderboard[7]?.name || '8th Seed',
+        })
+        
+        // Game 2: 6 seed vs 7 seed
+        games.push({
+            id: 'r1-g2',
+            round: 1,
             team1: leaderboard[5]?.name || '6th Seed',
             team2: leaderboard[6]?.name || '7th Seed',
         })
         
-        // Round 1:
-        // Game 1: 3rd seed (alone, waiting for play-in winner)
-        games.push({
-            id: 'r1-g1',
-            round: 1,
-            team1: leaderboard[2]?.name || '3rd Seed',
-            isBye: true, // Shown alone, waiting for play-in winner
-        })
-        
-        // Game 2: 4th vs 5th
-        games.push({
-            id: 'r1-g2',
-            round: 1,
-            team1: leaderboard[3]?.name || '4th Seed',
-            team2: leaderboard[4]?.name || '5th Seed',
-        })
-        
         // Round 2:
-        // Game 1: 1st seed (bye, alone, waiting for lower seed round 1 winner - which is 4th vs 5th)
+        // Game 1: 3 seed vs lower seeded winner from Round 1 (winner of 5vs8 has seed 5, winner of 6vs7 has seed 6, so lower is 5)
         games.push({
             id: 'r2-g1',
             round: 2,
-            team1: leaderboard[0]?.name || '1st Seed',
-            isBye: true,
-            waitingFor: '4th/5th', // Lower seeded winner
+            team1: leaderboard[2]?.name || '3rd Seed',
+            team2: 'Winner: 5 vs 8', // Lower seeded winner from Round 1 (seed 5 < seed 6)
+            waitingFor: 'Winner of 5 vs 8',
         })
         
-        // Game 2: 2nd seed (bye, alone, waiting for higher seed round 1 winner - which is play-in winner vs 3rd)
+        // Game 2: 4 seed vs higher seeded winner from Round 1 (winner of 6vs7 has seed 6, which is higher than seed 5)
         games.push({
             id: 'r2-g2',
             round: 2,
-            team1: leaderboard[1]?.name || '2nd Seed',
-            isBye: true,
-            waitingFor: 'Play-In/3rd', // Higher seeded winner
+            team1: leaderboard[3]?.name || '4th Seed',
+            team2: 'Winner: 6 vs 7', // Higher seeded winner from Round 1 (seed 6 > seed 5)
+            waitingFor: 'Winner of 6 vs 7',
         })
         
-        // Finals: Winner of Round 2, game 1 vs Winner of Round 2, game 2
+        // Round 3:
+        // Game 1: 1 seed vs lower seeded winner from Round 2 (3 seed < 4 seed, so winner of R2-G1)
         games.push({
-            id: 'finals-g1',
-            round: 3, // Finals is round 3
-            team1: `Winner: R2-G1`,
-            team2: `Winner: R2-G2`,
+            id: 'r3-g1',
+            round: 3,
+            team1: leaderboard[0]?.name || '1st Seed',
+            team2: 'Winner: R2-G1', // Lower seeded winner from Round 2 (3 seed < 4 seed)
+            waitingFor: 'Winner of 3 vs (5vs8)',
+        })
+        
+        // Game 2: 2 seed vs higher seeded winner from Round 2 (4 seed > 3 seed, so winner of R2-G2)
+        games.push({
+            id: 'r3-g2',
+            round: 3,
+            team1: leaderboard[1]?.name || '2nd Seed',
+            team2: 'Winner: R2-G2', // Higher seeded winner from Round 2 (4 seed > 3 seed)
+            waitingFor: 'Winner of 4 vs (6vs7)',
+        })
+        
+        // Championship (Round 4): Winner of Round 3 Game 1 vs Winner of Round 3 Game 2
+        games.push({
+            id: 'championship',
+            round: 4, // Championship is round 4
+            team1: 'Winner: R3-G1',
+            team2: 'Winner: R3-G2',
         })
         
         return games
@@ -296,14 +307,14 @@ export function PlayoffBracket() {
         )
     }
 
-    if (!useDatabase || leaderboard.length < 7) {
+    if (!useDatabase || leaderboard.length < 8) {
         return (
             <div className={styles.bracket}>
                 <h3 className={styles.title}>Playoff Bracket</h3>
                 <p className={styles.unavailable}>
                     {!useDatabase 
                         ? 'Database unavailable' 
-                        : 'Need at least 7 players for playoff bracket'}
+                        : 'Need at least 8 players for playoff bracket'}
                 </p>
             </div>
         )
@@ -313,24 +324,6 @@ export function PlayoffBracket() {
         <div className={styles.bracket}>
             <h3 className={styles.title}>Playoff Bracket</h3>
             <div className={styles.bracketContainer}>
-                {/* Play-In Round */}
-                <div className={styles.round}>
-                    <h4 className={styles.roundTitle}>Play-In</h4>
-                    <div className={styles.games}>
-                        {bracketGames
-                            .filter(game => game.round === 0)
-                            .map((game) => (
-                                <div key={game.id} className={styles.game}>
-                                    <div className={styles.seed}>6</div>
-                                    <div className={styles.team}>{game.team1}</div>
-                                    <div className={styles.vs}>vs</div>
-                                    <div className={styles.seed}>7</div>
-                                    <div className={styles.team}>{game.team2}</div>
-                                </div>
-                            ))}
-                    </div>
-                </div>
-
                 {/* Round 1 */}
                 <div className={styles.round}>
                     <h4 className={styles.roundTitle}>Round 1</h4>
@@ -338,23 +331,12 @@ export function PlayoffBracket() {
                         {bracketGames
                             .filter(game => game.round === 1)
                             .map((game, index) => (
-                                <div key={game.id} className={`${styles.game} ${game.isBye ? styles.bye : ''}`}>
-                                    {index === 0 ? (
-                                        // First game: 3rd seed alone (waiting for play-in winner)
-                                        <>
-                                            <div className={styles.seed}>3</div>
-                                            <div className={styles.team}>{game.team1}</div>
-                                        </>
-                                    ) : (
-                                        // Second game: 4th vs 5th
-                                        <>
-                                            <div className={styles.seed}>4</div>
-                                            <div className={styles.team}>{game.team1}</div>
-                                            <div className={styles.vs}>vs</div>
-                                            <div className={styles.seed}>5</div>
-                                            <div className={styles.team}>{game.team2}</div>
-                                        </>
-                                    )}
+                                <div key={game.id} className={styles.game}>
+                                    <div className={styles.seed}>{index === 0 ? '5' : '6'}</div>
+                                    <div className={styles.team}>{game.team1}</div>
+                                    <div className={styles.vs}>vs</div>
+                                    <div className={styles.seed}>{index === 0 ? '8' : '7'}</div>
+                                    <div className={styles.team}>{game.team2}</div>
                                 </div>
                             ))}
                     </div>
@@ -367,23 +349,45 @@ export function PlayoffBracket() {
                         {bracketGames
                             .filter(game => game.round === 2)
                             .map((game, index) => (
-                                <div key={game.id} className={`${styles.game} ${styles.bye}`}>
-                                    <div className={styles.seed}>{index === 0 ? '1' : '2'}</div>
+                                <div key={game.id} className={styles.game}>
+                                    <div className={styles.seed}>{index === 0 ? '3' : '4'}</div>
                                     <div className={styles.team}>{game.team1}</div>
+                                    <div className={styles.vs}>vs</div>
+                                    <div className={styles.team}>{game.team2}</div>
                                     {game.waitingFor && (
-                                        <div className={styles.waitingFor}>vs Winner: {game.waitingFor}</div>
+                                        <div className={styles.waitingFor}>({game.waitingFor})</div>
                                     )}
                                 </div>
                             ))}
                     </div>
                 </div>
 
-                {/* Finals */}
+                {/* Round 3 */}
                 <div className={styles.round}>
-                    <h4 className={styles.roundTitle}>Finals</h4>
+                    <h4 className={styles.roundTitle}>Round 3</h4>
                     <div className={styles.games}>
                         {bracketGames
                             .filter(game => game.round === 3)
+                            .map((game, index) => (
+                                <div key={game.id} className={styles.game}>
+                                    <div className={styles.seed}>{index === 0 ? '1' : '2'}</div>
+                                    <div className={styles.team}>{game.team1}</div>
+                                    <div className={styles.vs}>vs</div>
+                                    <div className={styles.team}>{game.team2}</div>
+                                    {game.waitingFor && (
+                                        <div className={styles.waitingFor}>({game.waitingFor})</div>
+                                    )}
+                                </div>
+                            ))}
+                    </div>
+                </div>
+
+                {/* Championship */}
+                <div className={styles.round}>
+                    <h4 className={styles.roundTitle}>Championship</h4>
+                    <div className={styles.games}>
+                        {bracketGames
+                            .filter(game => game.round === 4)
                             .map((game) => (
                                 <div key={game.id} className={styles.game}>
                                     <div className={styles.team}>{game.team1}</div>
