@@ -16,13 +16,17 @@ export default function GameBreakerPage() {
     })
   }
 
+  const cardsByTitle = [...gamebreakerCards].sort((a, b) =>
+    a.title.localeCompare(b.title, undefined, { sensitivity: 'base' })
+  )
+
   return (
     <main className={styles.main}>
       <div className={styles.container}>
         <h1 className={styles.title}>GameBreaker Cards</h1>
         <p className={styles.subtitle}>Click a card to flip and read the description</p>
         <div className={styles.grid}>
-          {gamebreakerCards.map((card) => (
+          {cardsByTitle.map((card) => (
             <div
               key={card.id}
               className={`${styles.cardWrapper} ${flipped.has(card.id) ? styles.flipped : ''}`}

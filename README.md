@@ -1,12 +1,11 @@
 # Putting League
 
-A Next.js application ready to deploy to GitHub Pages with Google Sheets integration.
+A Next.js application with Google Sheets integration.
 
 ## Features
 
 - Home page with card-based navigation
 - Dynamic pages for embedding Google Sheets
-- Optimized for GitHub Pages deployment
 - Modern, responsive UI
 
 ## Getting Started
@@ -31,8 +30,6 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 npm run build
 ```
 
-This will create an `out` directory with static files ready for deployment.
-
 ## Configuration
 
 ### Adding Google Sheets
@@ -55,32 +52,6 @@ This will create an `out` directory with static files ready for deployment.
 
 **Note**: The app automatically converts sharing URLs to embed URLs. Make sure your Google Sheet is set to be viewable by anyone with the link.
 
-## GitHub Pages Deployment
-
-### Automatic Deployment (Recommended)
-
-1. Push your code to GitHub
-2. Go to your repository Settings → Pages
-3. Set source to "GitHub Actions"
-4. The workflow in `.github/workflows/deploy.yml` will automatically deploy on every push to `main`
-
-### Manual Deployment
-
-1. Build the project: `npm run build`
-2. The `out` directory contains the static files
-3. Push the `out` directory contents to the `gh-pages` branch
-
-### Repository Name Configuration
-
-If your repository name is not the root (e.g., `username.github.io/repo-name`), you need to update `next.config.js`:
-
-```javascript
-basePath: '/puttingleague',
-assetPrefix: '/puttingleague/',
-```
-
-Replace `puttingleague` with your actual repository name.
-
 ## Project Structure
 
 ```
@@ -94,9 +65,6 @@ Replace `puttingleague` with your actual repository name.
 │       └── [id]/
 │           ├── page.tsx    # Dynamic sheet page
 │           └── page.module.css
-├── .github/
-│   └── workflows/
-│       └── deploy.yml      # GitHub Actions deployment
 ├── next.config.js          # Next.js configuration
 └── package.json
 ```

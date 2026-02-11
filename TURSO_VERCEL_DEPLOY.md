@@ -79,12 +79,9 @@ After this, the Turso DB has the same structure as your current SQLite DB (playe
 
 Your app and API will be at `https://your-project.vercel.app` (and your custom domain if you add one).
 
-## 5. Next.js config for Vercel (no static export)
+## 5. Next.js config for Vercel
 
-The repo is set up so that:
-
-- **Vercel** (default): Do not set `GITHUB_PAGES`. The build does not use `output: 'export'`, so API routes work and the app runs on Vercel with Turso.
-- **GitHub Pages** (static only): Set env `GITHUB_PAGES=1` when building. That enables `output: 'export'` for a static export (no API routes at build time).
+The app is configured for standard Next.js (no static export), so API routes work when deployed to Vercel with Turso.
 
 ## 6. Local development with Turso
 
