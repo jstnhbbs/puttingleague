@@ -15,25 +15,17 @@
   font-size: 2.5rem;
   font-weight: 700;
   text-align: center;
-  color: #333;
+  color: var(--foreground);
   margin-bottom: 0.5rem;
   transition: color 0.3s ease;
 }
 
-[data-theme='dark'] .title {
-  color: #e0e0e0;
-}
-
 .subtitle {
   text-align: center;
-  color: #666;
+  color: var(--foreground-muted);
   margin-bottom: 2rem;
   font-size: 1.1rem;
   transition: color 0.3s ease;
-}
-
-[data-theme='dark'] .subtitle {
-  color: #b0b0b0;
 }
 
 .grid {
@@ -73,34 +65,34 @@
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
 .cardFront {
-  background: white;
-  border: 2px solid rgba(183, 153, 83, 0.4);
+  background: var(--card-bg);
+  border: 2px solid color-mix(in srgb, var(--accent) 40%, transparent);
   flex-direction: column;
 }
 
 [data-theme='dark'] .cardFront {
-  background: #2d2d44;
-  border-color: rgba(183, 153, 83, 0.5);
+  background: var(--card-bg-dark);
+  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
 }
 
 .cardBack {
-  background: linear-gradient(145deg, #faf8f3 0%, #f5e6d3 100%);
-  border: 2px solid #B79953;
+  background: var(--card-bg);
+  border: 2px solid var(--accent);
   transform: rotateY(180deg);
   padding: 1rem;
   justify-content: center;
 }
 
 [data-theme='dark'] .cardBack {
-  background: linear-gradient(145deg, #2d2d44 0%, #1a1a2e 100%);
-  border-color: #B79953;
+  background: var(--card-bg-dark);
+  border-color: var(--accent);
 }
 
 .imageWrap {
@@ -129,46 +121,37 @@
   padding: 0.5rem 0.75rem;
   font-weight: 600;
   font-size: 0.95rem;
-  color: #333;
+  color: var(--foreground);
   text-align: center;
-  background: rgba(183, 153, 83, 0.15);
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
   transition: color 0.3s ease, background 0.3s ease;
 }
 
 [data-theme='dark'] .cardTitle {
-  color: #e0e0e0;
-  background: rgba(183, 153, 83, 0.2);
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
 }
 
 .cardBackTitle {
   font-weight: 700;
   font-size: 1rem;
-  color: #333;
+  color: var(--foreground);
   margin-bottom: 0.75rem;
   text-align: center;
   transition: color 0.3s ease;
 }
 
-[data-theme='dark'] .cardBackTitle {
-  color: #e0e0e0;
-}
-
 .cardDescription {
   font-size: 0.85rem;
   line-height: 1.5;
-  color: #555;
+  color: var(--foreground-muted);
   margin: 0;
   flex: 1;
   overflow-y: auto;
   transition: color 0.3s ease;
 }
 
-[data-theme='dark'] .cardDescription {
-  color: #b0b0b0;
-}
-
 .cardWrapper:focus {
-  outline: 2px solid #B79953;
+  outline: 2px solid var(--accent);
   outline-offset: 4px;
   border-radius: 12px;
 }

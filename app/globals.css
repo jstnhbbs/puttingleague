@@ -4,6 +4,13 @@
   margin: 0;
 }
 
+html {
+  font-size: 87.5%; /* 1rem = 14px – slightly larger base for readability */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
 html,
 body {
   max-width: 100vw;
@@ -11,28 +18,144 @@ body {
 }
 
 body {
+  width: 100%;
+  min-width: 320px;
+  min-height: 100vh;
+  overflow-wrap: break-word;
+  overflow-wrap: anywhere;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  min-height: 100vh;
-  transition: background 0.3s ease;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* Roboto font is applied via className in layout.tsx, not in font-family here */
-
-/* Light mode (default) */
+/* Light mode (default) – Foundation / Ace Bounty style: clean white */
 body {
-  background: linear-gradient(135deg, #ffffff 0%, #faf8f3 50%, #f5e6d3 100%);
+  background: #ffffff;
+  color: var(--foreground);
 }
 
 /* Dark mode */
 [data-theme='dark'] body {
-  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  background: #0a0a0a;
+  color: var(--foreground);
+}
+
+:focus {
+  outline: 0;
+}
+
+:focus-visible {
+  outline: auto Highlight;
+  outline: auto -webkit-focus-ring-color;
+}
+
+/* Foundation / Ace Bounty: black header, gold accent, clean white content */
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --foreground-muted: #525252;
+  --accent: #bc9645;
+  --accent-hover: #a6823b;
+  --border: #a3a3a3;
+  --border-light: #e5e5e5;
+  --card-bg: #ffffff;
+  --card-bg-dark: #171717;
+  --header-bg: #0a0a0a;
+  --header-fg: #fafafa;
+  --input-bg-dark: #262626;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-accent: 0 4px 14px rgba(188, 150, 69, 0.25);
+  --shadow-accent-dark: 0 4px 14px rgba(188, 150, 69, 0.35);
+  --shadow-card-dark: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --card-placeholder-bg: #e5e5e5;
+}
+
+[data-theme='dark'] {
+  --foreground: #fafafa;
+  --foreground-muted: #a3a3a3;
+  --accent-hover: #c9a952;
+  --card-placeholder-bg: #262626;
 }
 
 a {
   color: inherit;
   text-decoration: none;
+}
+
+/* Page title – Foundation-style bold heading */
+.page-title {
+  color: var(--foreground) !important;
+  text-shadow: none !important;
+  transition: color 0.3s ease;
+}
+
+[data-theme='dark'] .page-title {
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Section headings – clean style */
+.section-heading {
+  color: var(--foreground) !important;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-light);
+  transition: color 0.3s ease, border-color 0.3s ease;
+}
+
+[data-theme='dark'] .section-heading {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Navbar text: light on dark background */
+header a,
+header button,
+header nav a,
+header nav button {
+  color: var(--header-fg) !important;
+}
+
+header a:hover,
+header button:hover,
+header nav a:hover,
+header nav button:hover {
+  color: var(--accent) !important;
+}
+
+/* Active nav link */
+header nav a.active,
+header a.active {
+  background: color-mix(in srgb, var(--accent) 25%, transparent) !important;
+  color: var(--accent) !important;
+}
+
+[data-theme='dark'] header nav a.active,
+[data-theme='dark'] header a.active {
+  background: color-mix(in srgb, var(--accent) 20%, transparent) !important;
+  color: var(--accent) !important;
+}
+
+/* Headings and paragraphs use theme foreground */
+h1, h2, h3, h4, h5, h6, p {
+  color: var(--foreground) !important;
+}
+
+/* Card style – theme-aware */
+.card-global {
+  background: var(--card-bg) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+[data-theme='dark'] .card-global {
+  background: var(--card-bg-dark) !important;
+  box-shadow: var(--shadow-card-dark) !important;
+}
+
+.card-global:hover {
+  box-shadow: var(--shadow-accent) !important;
+}
+
+[data-theme='dark'] .card-global:hover {
+  box-shadow: var(--shadow-accent-dark) !important;
 }

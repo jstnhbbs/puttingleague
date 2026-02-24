@@ -15,28 +15,27 @@
   font-size: 3rem;
   font-weight: 700;
   text-align: center;
-  color: #333;
+  color: var(--foreground);
   margin-bottom: 2rem;
   text-shadow: none;
   transition: color 0.3s ease;
 }
 
 [data-theme='dark'] .title {
-  color: #e0e0e0;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .content {
-  background: white;
+  background: var(--card-bg);
   border-radius: 12px;
   padding: 2rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm);
   transition: all 0.3s ease;
 }
 
 [data-theme='dark'] .content {
-  background: #2d2d44;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  background: var(--card-bg-dark);
+  box-shadow: var(--shadow-card-dark);
 }
 
 .section {
@@ -50,25 +49,23 @@
 .sectionTitle {
   font-size: 1.75rem;
   font-weight: 600;
-  color: #333;
+  color: var(--foreground);
   margin-bottom: 1rem;
-  transition: color 0.3s ease;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-light);
+  transition: color 0.3s ease, border-color 0.3s ease;
 }
 
 [data-theme='dark'] .sectionTitle {
-  color: #e0e0e0;
+  border-bottom-color: rgba(255, 255, 255, 0.1);
 }
 
 .text {
   font-size: 1rem;
   line-height: 1.6;
-  color: #666;
+  color: var(--foreground-muted);
   margin-bottom: 1rem;
   transition: color 0.3s ease;
-}
-
-[data-theme='dark'] .text {
-  color: #b0b0b0;
 }
 
 .list {
@@ -80,28 +77,20 @@
 .list li {
   font-size: 1rem;
   line-height: 1.6;
-  color: #666;
+  color: var(--foreground-muted);
   margin-bottom: 0.75rem;
   padding-left: 1.5rem;
   position: relative;
   transition: color 0.3s ease;
 }
 
-[data-theme='dark'] .list li {
-  color: #b0b0b0;
-}
-
 .list li::before {
   content: '•';
   position: absolute;
   left: 0;
-  color: #B79953;
+  color: var(--accent);
   font-weight: bold;
   font-size: 1.5rem;
-}
-
-[data-theme='dark'] .list li::before {
-  color: #B79953;
 }
 
 @media (max-width: 768px) {

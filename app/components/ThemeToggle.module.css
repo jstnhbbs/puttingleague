@@ -10,27 +10,27 @@
   justify-content: center;
   cursor: pointer;
   transition: all 0.3s ease;
-  color: #e0e0e0;
+  color: var(--header-fg);
   flex-shrink: 0;
 }
 
 .toggle:hover {
-  background: rgba(183, 153, 83, 0.3);
-  border-color: #B79953;
-  color: #B79953;
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+  border-color: var(--accent);
+  color: var(--accent);
   transform: scale(1.1);
 }
 
 [data-theme='dark'] .toggle {
   background: rgba(0, 0, 0, 0.3);
   border-color: rgba(255, 255, 255, 0.2);
-  color: white;
+  color: var(--header-fg);
 }
 
 [data-theme='dark'] .toggle:hover {
-  background: rgba(183, 153, 83, 0.2);
-  border-color: #B79953;
-  color: #B79953;
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 @media (max-width: 768px) {

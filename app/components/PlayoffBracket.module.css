@@ -1,30 +1,26 @@
 .bracket {
   width: 100%;
   max-width: 500px;
-  background: white;
+  background: var(--card-bg);
   border-radius: 12px;
   padding: 1.5rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm);
   margin-top: 0;
   transition: all 0.3s ease;
 }
 
 [data-theme='dark'] .bracket {
-  background: #2d2d44;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  background: var(--card-bg-dark);
+  box-shadow: var(--shadow-card-dark);
 }
 
 .title {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #333;
+  color: var(--foreground);
   margin: 0 0 1rem 0;
   text-align: center;
   transition: color 0.3s ease;
-}
-
-[data-theme='dark'] .title {
-  color: #e0e0e0;
 }
 
 .bracketContainer {
@@ -42,14 +38,10 @@
 .roundTitle {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #B79953;
+  color: var(--accent);
   margin: 0;
   text-align: center;
   transition: color 0.3s ease;
-}
-
-[data-theme='dark'] .roundTitle {
-  color: #B79953;
 }
 
 .games {
@@ -59,9 +51,9 @@
 }
 
 .game {
-  background: white;
-  border: 2px solid #333;
-  border-radius: 4px;
+  background: var(--card-bg);
+  border: 2px solid var(--border);
+  border-radius: 0.25rem;
   padding: 0.75rem;
   display: flex;
   flex-direction: row;
@@ -73,8 +65,8 @@
 }
 
 [data-theme='dark'] .game {
-  background: #1a1a1a;
-  border-color: #555;
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  border-color: var(--accent);
 }
 
 .game::after {
@@ -85,73 +77,53 @@
   transform: translateY(-50%);
   width: 1px;
   height: 80%;
-  border-left: 2px dotted #999;
-}
-
-[data-theme='dark'] .game {
-  background: rgba(183, 153, 83, 0.15);
-  border-color: #B79953;
+  border-left: 2px dotted var(--foreground-muted);
 }
 
 .game:hover {
-  background: rgba(183, 153, 83, 0.2);
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(183, 153, 83, 0.3);
+  box-shadow: var(--shadow-accent);
 }
 
 .bye {
-  background: rgba(183, 153, 83, 0.05);
+  background: color-mix(in srgb, var(--accent) 5%, transparent);
   border-style: solid;
-  border-color: #B79953;
+  border-color: var(--accent);
   opacity: 0.9;
 }
 
 [data-theme='dark'] .bye {
-  background: rgba(183, 153, 83, 0.1);
-  border-color: #B79953;
-}
-
-.byeGame {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border-color: var(--accent);
 }
 
 .seed {
   font-weight: 700;
-  color: #666;
+  color: var(--foreground-muted);
   font-size: 0.85rem;
   min-width: 20px;
   transition: color 0.3s ease;
 }
 
-[data-theme='dark'] .seed {
-  color: #999;
-}
-
 .team {
   font-weight: 600;
-  color: #333;
+  color: var(--foreground);
   font-size: 0.95rem;
   flex: 1;
   transition: color 0.3s ease;
 }
 
-[data-theme='dark'] .team {
-  color: #e0e0e0;
-}
-
 .vs {
   font-size: 0.85rem;
-  color: #B79953;
+  color: var(--accent);
   font-weight: 600;
   font-style: italic;
 }
 
 .byeLabel {
   font-size: 0.75rem;
-  color: #B79953;
+  color: var(--accent);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -159,26 +131,17 @@
 
 .waitingFor {
   font-size: 0.7rem;
-  color: #999;
+  color: var(--foreground-muted);
   font-style: italic;
   margin-top: 0.25rem;
-}
-
-[data-theme='dark'] .waitingFor {
-  color: #888;
 }
 
 .loading,
 .unavailable {
   text-align: center;
-  color: #666;
+  color: var(--foreground-muted);
   padding: 1rem;
   font-style: italic;
-}
-
-[data-theme='dark'] .loading,
-[data-theme='dark'] .unavailable {
-  color: #b0b0b0;
 }
 
 @media (max-width: 768px) {
