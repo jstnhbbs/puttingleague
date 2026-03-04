@@ -4,6 +4,7 @@ import './globals.css'
 import { ThemeProvider } from './components/ThemeProvider'
 import { Navbar } from './components/Navbar'
 import { CSPFix } from './components/CSPFix'
+import { GoogleAnalytics } from './components/GoogleAnalytics'
 
 const roboto = Roboto({
   weight: ['300', '400', '500', '700'],
@@ -30,6 +31,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={roboto.className} suppressHydrationWarning>
+        <GoogleAnalytics />
         <CSPFix />
         <ThemeProvider>
           <Navbar />
