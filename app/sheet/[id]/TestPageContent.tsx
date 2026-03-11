@@ -541,26 +541,6 @@ export default function TestPageContent({ sheetTitle, seasonId }: TestPageConten
                     </table>
                 </div>
 
-                <div className={styles.instructions}>
-                    <h3>Instructions:</h3>
-                    <ul>
-                        {isAuthenticated ? (
-                            <>
-                                <li>Click any cell to edit (except rows 11 and 12)</li>
-                                <li>Enter numbers directly (e.g., 123, 45.67)</li>
-                                <li><strong>Row 11: Automatically sums rows 1-10 for each column</strong></li>
-                                <li><strong>Row 12: Total of rows 1-10 minus the two lowest scores in that column</strong></li>
-                            </>
-                        ) : (
-                            <>
-                                <li>This page is in view-only mode</li>
-                                <li>Click "Unlock Editing" to enable editing with admin password</li>
-                                <li>All calculations (rows 11 and 12) are still visible and update automatically</li>
-                            </>
-                        )}
-                    </ul>
-                </div>
-
                 <SeasonPlayoff seasonId={seasonId} isAuthenticated={isAuthenticated} />
 
                 {/* Password prompt modal overlay */}
@@ -605,6 +585,26 @@ export default function TestPageContent({ sheetTitle, seasonId }: TestPageConten
                         </div>
                     </div>
                 )}
+                
+                <div className={styles.instructions}>
+                    <h3>Instructions:</h3>
+                    <ul>
+                        {isAuthenticated ? (
+                            <>
+                                <li>Click any cell to edit (except rows 11 and 12)</li>
+                                <li>Enter numbers directly (e.g., 123, 45.67)</li>
+                                <li><strong>Row 11: Automatically sums rows 1-10 for each column</strong></li>
+                                <li><strong>Row 12: Total of rows 1-10 minus the two lowest scores in that column</strong></li>
+                            </>
+                        ) : (
+                            <>
+                                <li>This page is in view-only mode</li>
+                                <li>Click "Unlock Editing" to enable editing with admin password</li>
+                                <li>All calculations (rows 11 and 12) are still visible and update automatically</li>
+                            </>
+                        )}
+                    </ul>
+                </div>
             </div>
         </main>
     )
