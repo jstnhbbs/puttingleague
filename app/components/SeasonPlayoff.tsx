@@ -156,18 +156,22 @@ export function SeasonPlayoff({ seasonId, isAuthenticated }: SeasonPlayoffProps)
       <h2 className={styles.title}>Playoffs</h2>
       {isEarly && (
         <p className={styles.subtitle}>
-          Seeds 1–4 play semifinals and finals; seeds 5 &amp; 6 play for last place.
+          Round 1: 1 vs 4 and 2 vs 3 <br />
+          Round 2: Winner 1 vs 4 vs Winner 2 vs 3 <br />
+          Championship: Winner of Round 2.
         </p>
       )}
       {isSeason5 && (
         <p className={styles.subtitle}>
-          6 vs 7 play in; Round 1 is 3 vs play‑in winner and 4 vs 5; Round 2 is 1 vs lower‑seeded
-          winner and 2 vs higher‑seeded winner; Finals between Round‑2 winners.
+          Play In: 6 vs 7 <br />
+          Round 1: 3 vs play‑in winner and 4 vs 5 <br />
+          Round 2: 1 vs lower‑seeded winner and 2 vs higher‑seeded winner <br />
+          Championship: Finals between Round‑2 winners.
         </p>
       )}
       {isSeason6 && (
         <p className={styles.subtitle}>
-          Round 1: 5v8 and 6v7. <br />
+          Round 1: 5 vs 8 and 6 vs 7 <br />
           Round 2: 3 vs lower‑seeded R1 winner, 4 vs higher‑seeded R1 winner. <br />
           Round 3: 1 vs lower‑seeded R2 winner, 2 vs higher‑seeded R2 winner. <br />
           Championship: R3 winners.
