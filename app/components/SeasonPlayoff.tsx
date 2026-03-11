@@ -157,7 +157,7 @@ export function SeasonPlayoff({ seasonId, isAuthenticated }: SeasonPlayoffProps)
       {isEarly && (
         <p className={styles.subtitle}>
           Round 1: 1 vs 4 and 2 vs 3 <br />
-          Round 2: Winner 1 vs 4 vs Winner 2 vs 3 <br />
+          Round 2: Winner of 1 vs 4 vs Winner of 2 vs 3 <br />
           Championship: Winner of Round 2.
         </p>
       )}
