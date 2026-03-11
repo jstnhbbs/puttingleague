@@ -5,7 +5,7 @@ import { fetchCells, fetchPlayoffScores, savePlayoffScore, checkHealth } from '.
 import { getLeaderboardFromCells, type LeaderboardEntry } from '../lib/playoffUtils'
 import styles from './SeasonPlayoff.module.css'
 
-type GameId = 'r1g1' | 'r1g2' | 'r1last' | 'finals' | 'playin' | 'r2g1' | 'r2g2'
+type GameId = 'r1g1' | 'r1g2' | 'r1last' | 'finals' | 'playin' | 'r2g1' | 'r2g2' | 'r3g1' | 'r3g2'
 
 interface GameScore {
   score1: string
@@ -20,11 +20,14 @@ const DEFAULT_SCORES: Record<GameId, GameScore> = {
   playin: { score1: '', score2: '' },
   r2g1: { score1: '', score2: '' },
   r2g2: { score1: '', score2: '' },
+  r3g1: { score1: '', score2: '' },
+  r3g2: { score1: '', score2: '' },
 }
 
 const EARLY_SEASONS = ['season1', 'season2', 'season3', 'season4'] as const
 const EARLY_COLUMN_NAMES = ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Brad']
 const SEASON5_COLUMNS = ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Tyler', 'Brad']
+const SEASON6_COLUMNS = ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Graham', 'Tyler', 'Brad']
 
 function getWinner(score1: string, score2: string, name1: string, name2: string): string | null {
   const a = parseFloat(score1)
@@ -35,8 +38,6 @@ function getWinner(score1: string, score2: string, name1: string, name2: string)
   return null
 }
 
-type SupportedSeasonId = typeof EARLY_SEASONS[number] | 'season5'
-
 interface SeasonPlayoffProps {
   seasonId: string
   isAuthenticated: boolean
@@ -45,8 +46,9 @@ interface SeasonPlayoffProps {
 export function SeasonPlayoff({ seasonId, isAuthenticated }: SeasonPlayoffProps) {
   const isEarly = EARLY_SEASONS.includes(seasonId as (typeof EARLY_SEASONS)[number])
   const isSeason5 = seasonId === 'season5'
+  const isSeason6 = seasonId === 'season6'
 
-  if (!isEarly && !isSeason5) {
+  if (!isEarly && !isSeason5 && !isSeason6) {
     return null
   }
 
@@ -67,8 +69,13 @@ export function SeasonPlayoff({ seasonId, isAuthenticated }: SeasonPlayoffProps)
     }
     try {
       const cells = await fetchCells(seasonId)
-      const columnNames =
-        isEarly ? EARLY_COLUMN_NAMES : isSeason5 ? SEASON5_COLUMNS : EARLY_COLUMN_NAMES
+      const columnNames = isEarly
+        ? EARLY_COLUMN_NAMES
+        : isSeason5
+          ? SEASON5_COLUMNS
+          : isSeason6
+            ? SEASON6_COLUMNS
+            : EARLY_COLUMN_NAMES
       const entries = getLeaderboardFromCells(cells, columnNames)
       setLeaderboard(entries)
 
@@ -91,7 +98,7 @@ export function SeasonPlayoff({ seasonId, isAuthenticated }: SeasonPlayoffProps)
     } finally {
       setIsLoading(false)
     }
-  }, [seasonId])
+  }, [seasonId, isEarly, isSeason5, isSeason6])
 
   useEffect(() => {
     loadSeason()
@@ -144,6 +151,12 @@ export function SeasonPlayoff({ seasonId, isAuthenticated }: SeasonPlayoffProps)
         <p className={styles.subtitle}>
           6 vs 7 play in; Round 1 is 3 vs play‑in winner and 4 vs 5; Round 2 is 1 vs lower‑seeded
           winner and 2 vs higher‑seeded winner; Finals between Round‑2 winners.
+        </p>
+      )}
+      {isSeason6 && (
+        <p className={styles.subtitle}>
+          Round 1: 5v8 and 6v7. Round 2: 3 vs lower‑seeded R1 winner, 4 vs higher‑seeded R1 winner.
+          Round 3: 1 vs lower‑seeded R2 winner, 2 vs higher‑seeded R2 winner. Championship: R3 winners.
         </p>
       )}
 
@@ -619,6 +632,356 @@ export function SeasonPlayoff({ seasonId, isAuthenticated }: SeasonPlayoffProps)
           })()}
         </div>
       )}
+
+      {/* Season 6: 8‑player bracket */}
+      {!isLoading && useDatabase && leaderboard.length > 0 && isSeason6 && (() => {
+        const getSeedNum = (playerName: string | null): number | null => {
+          if (!playerName) return null
+          const entry = leaderboard.find((e) => e.name === playerName)
+          return entry ? entry.seed : null
+        }
+
+        const r1g1WinnerS6 = getWinner(scores.r1g1.score1, scores.r1g1.score2, name(5), name(8))
+        const r1g2WinnerS6 = getWinner(scores.r1g2.score1, scores.r1g2.score2, name(6), name(7))
+
+        let lowerR1: string | null = null
+        let higherR1: string | null = null
+        if (r1g1WinnerS6 && r1g2WinnerS6) {
+          const sA = getSeedNum(r1g1WinnerS6)
+          const sB = getSeedNum(r1g2WinnerS6)
+          if (sA != null && sB != null) {
+            if (sA < sB) {
+              higherR1 = r1g1WinnerS6
+              lowerR1 = r1g2WinnerS6
+            } else {
+              higherR1 = r1g2WinnerS6
+              lowerR1 = r1g1WinnerS6
+            }
+          }
+        }
+
+        const r2g1WinnerS6 = getWinner(
+          scores.r2g1.score1,
+          scores.r2g1.score2,
+          name(3),
+          lowerR1 ?? 'Lower R1 winner'
+        )
+        const r2g2WinnerS6 = getWinner(
+          scores.r2g2.score1,
+          scores.r2g2.score2,
+          name(4),
+          higherR1 ?? 'Higher R1 winner'
+        )
+
+        let lowerR2: string | null = null
+        let higherR2: string | null = null
+        if (r2g1WinnerS6 && r2g2WinnerS6) {
+          const sA = getSeedNum(r2g1WinnerS6)
+          const sB = getSeedNum(r2g2WinnerS6)
+          if (sA != null && sB != null) {
+            if (sA < sB) {
+              higherR2 = r2g1WinnerS6
+              lowerR2 = r2g2WinnerS6
+            } else {
+              higherR2 = r2g2WinnerS6
+              lowerR2 = r2g1WinnerS6
+            }
+          }
+        }
+
+        const r3g1Winner = getWinner(
+          scores.r3g1.score1,
+          scores.r3g1.score2,
+          name(1),
+          lowerR2 ?? 'Lower R2 winner'
+        )
+        const r3g2Winner = getWinner(
+          scores.r3g2.score1,
+          scores.r3g2.score2,
+          name(2),
+          higherR2 ?? 'Higher R2 winner'
+        )
+        const finalsWinnerS6 = getWinner(
+          scores.finals.score1,
+          scores.finals.score2,
+          r3g1Winner ?? 'R3 side 1',
+          r3g2Winner ?? 'R3 side 2'
+        )
+
+        return (
+          <div className={styles.bracket}>
+            <div className={styles.round}>
+              <h3 className={styles.roundTitle}>Round 1</h3>
+              <div className={styles.games}>
+                <div className={styles.game}>
+                  <div className={styles.slot}>
+                    <span className={styles.seed}>5</span>
+                    <span className={styles.name}>{name(5)}</span>
+                    <input
+                      type="number"
+                      className={`${styles.scoreInput} ${!isAuthenticated ? styles.viewOnly : ''}`}
+                      placeholder="—"
+                      value={scores.r1g1.score1}
+                      onChange={(e) => setGameScore('r1g1', 'score1', e.target.value)}
+                      min={0}
+                      disabled={!isAuthenticated}
+                      aria-label={`${name(5)} score`}
+                    />
+                  </div>
+                  <span className={styles.vs}>vs</span>
+                  <div className={styles.slot}>
+                    <input
+                      type="number"
+                      className={`${styles.scoreInput} ${!isAuthenticated ? styles.viewOnly : ''}`}
+                      placeholder="—"
+                      value={scores.r1g1.score2}
+                      onChange={(e) => setGameScore('r1g1', 'score2', e.target.value)}
+                      min={0}
+                      disabled={!isAuthenticated}
+                      aria-label={`${name(8)} score`}
+                    />
+                    <span className={styles.name}>{name(8)}</span>
+                    <span className={styles.seed}>8</span>
+                  </div>
+                  {r1g1WinnerS6 && (
+                    <p className={styles.gameLabel}>
+                      Winner: <span className={styles.winner}>{r1g1WinnerS6}</span>
+                    </p>
+                  )}
+                </div>
+                <div className={styles.game}>
+                  <div className={styles.slot}>
+                    <span className={styles.seed}>6</span>
+                    <span className={styles.name}>{name(6)}</span>
+                    <input
+                      type="number"
+                      className={`${styles.scoreInput} ${!isAuthenticated ? styles.viewOnly : ''}`}
+                      placeholder="—"
+                      value={scores.r1g2.score1}
+                      onChange={(e) => setGameScore('r1g2', 'score1', e.target.value)}
+                      min={0}
+                      disabled={!isAuthenticated}
+                      aria-label={`${name(6)} score`}
+                    />
+                  </div>
+                  <span className={styles.vs}>vs</span>
+                  <div className={styles.slot}>
+                    <input
+                      type="number"
+                      className={`${styles.scoreInput} ${!isAuthenticated ? styles.viewOnly : ''}`}
+                      placeholder="—"
+                      value={scores.r1g2.score2}
+                      onChange={(e) => setGameScore('r1g2', 'score2', e.target.value)}
+                      min={0}
+                      disabled={!isAuthenticated}
+                      aria-label={`${name(7)} score`}
+                    />
+                    <span className={styles.name}>{name(7)}</span>
+                    <span className={styles.seed}>7</span>
+                  </div>
+                  {r1g2WinnerS6 && (
+                    <p className={styles.gameLabel}>
+                      Winner: <span className={styles.winner}>{r1g2WinnerS6}</span>
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.round}>
+              <h3 className={styles.roundTitle}>Round 2</h3>
+              <div className={styles.games}>
+                <div className={styles.game}>
+                  <div className={styles.slot}>
+                    <span className={styles.seed}>3</span>
+                    <span className={styles.name}>{name(3)}</span>
+                    <input
+                      type="number"
+                      className={`${styles.scoreInput} ${!isAuthenticated ? styles.viewOnly : ''}`}
+                      placeholder="—"
+                      value={scores.r2g1.score1}
+                      onChange={(e) => setGameScore('r2g1', 'score1', e.target.value)}
+                      min={0}
+                      disabled={!isAuthenticated}
+                      aria-label={`${name(3)} score`}
+                    />
+                  </div>
+                  <span className={styles.vs}>vs</span>
+                  <div className={styles.slot}>
+                    <input
+                      type="number"
+                      className={`${styles.scoreInput} ${!isAuthenticated ? styles.viewOnly : ''}`}
+                      placeholder="—"
+                      value={scores.r2g1.score2}
+                      onChange={(e) => setGameScore('r2g1', 'score2', e.target.value)}
+                      min={0}
+                      disabled={!isAuthenticated}
+                      aria-label="Lower R1 winner score"
+                    />
+                    <span className={styles.name}>{lowerR1 ?? 'Lower R1 winner'}</span>
+                  </div>
+                  {r2g1WinnerS6 && (
+                    <p className={styles.gameLabel}>
+                      Winner: <span className={styles.winner}>{r2g1WinnerS6}</span>
+                    </p>
+                  )}
+                </div>
+                <div className={styles.game}>
+                  <div className={styles.slot}>
+                    <span className={styles.seed}>4</span>
+                    <span className={styles.name}>{name(4)}</span>
+                    <input
+                      type="number"
+                      className={`${styles.scoreInput} ${!isAuthenticated ? styles.viewOnly : ''}`}
+                      placeholder="—"
+                      value={scores.r2g2.score1}
+                      onChange={(e) => setGameScore('r2g2', 'score1', e.target.value)}
+                      min={0}
+                      disabled={!isAuthenticated}
+                      aria-label={`${name(4)} score`}
+                    />
+                  </div>
+                  <span className={styles.vs}>vs</span>
+                  <div className={styles.slot}>
+                    <input
+                      type="number"
+                      className={`${styles.scoreInput} ${!isAuthenticated ? styles.viewOnly : ''}`}
+                      placeholder="—"
+                      value={scores.r2g2.score2}
+                      onChange={(e) => setGameScore('r2g2', 'score2', e.target.value)}
+                      min={0}
+                      disabled={!isAuthenticated}
+                      aria-label="Higher R1 winner score"
+                    />
+                    <span className={styles.name}>{higherR1 ?? 'Higher R1 winner'}</span>
+                  </div>
+                  {r2g2WinnerS6 && (
+                    <p className={styles.gameLabel}>
+                      Winner: <span className={styles.winner}>{r2g2WinnerS6}</span>
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.round}>
+              <h3 className={styles.roundTitle}>Round 3</h3>
+              <div className={styles.games}>
+                <div className={styles.game}>
+                  <div className={styles.slot}>
+                    <span className={styles.seed}>1</span>
+                    <span className={styles.name}>{name(1)}</span>
+                    <input
+                      type="number"
+                      className={`${styles.scoreInput} ${!isAuthenticated ? styles.viewOnly : ''}`}
+                      placeholder="—"
+                      value={scores.r3g1.score1}
+                      onChange={(e) => setGameScore('r3g1', 'score1', e.target.value)}
+                      min={0}
+                      disabled={!isAuthenticated}
+                      aria-label={`${name(1)} score`}
+                    />
+                  </div>
+                  <span className={styles.vs}>vs</span>
+                  <div className={styles.slot}>
+                    <input
+                      type="number"
+                      className={`${styles.scoreInput} ${!isAuthenticated ? styles.viewOnly : ''}`}
+                      placeholder="—"
+                      value={scores.r3g1.score2}
+                      onChange={(e) => setGameScore('r3g1', 'score2', e.target.value)}
+                      min={0}
+                      disabled={!isAuthenticated}
+                      aria-label="Lower R2 winner score"
+                    />
+                    <span className={styles.name}>{lowerR2 ?? 'Lower R2 winner'}</span>
+                  </div>
+                  {r3g1Winner && (
+                    <p className={styles.gameLabel}>
+                      Winner: <span className={styles.winner}>{r3g1Winner}</span>
+                    </p>
+                  )}
+                </div>
+                <div className={styles.game}>
+                  <div className={styles.slot}>
+                    <span className={styles.seed}>2</span>
+                    <span className={styles.name}>{name(2)}</span>
+                    <input
+                      type="number"
+                      className={`${styles.scoreInput} ${!isAuthenticated ? styles.viewOnly : ''}`}
+                      placeholder="—"
+                      value={scores.r3g2.score1}
+                      onChange={(e) => setGameScore('r3g2', 'score1', e.target.value)}
+                      min={0}
+                      disabled={!isAuthenticated}
+                      aria-label={`${name(2)} score`}
+                    />
+                  </div>
+                  <span className={styles.vs}>vs</span>
+                  <div className={styles.slot}>
+                    <input
+                      type="number"
+                      className={`${styles.scoreInput} ${!isAuthenticated ? styles.viewOnly : ''}`}
+                      placeholder="—"
+                      value={scores.r3g2.score2}
+                      onChange={(e) => setGameScore('r3g2', 'score2', e.target.value)}
+                      min={0}
+                      disabled={!isAuthenticated}
+                      aria-label="Higher R2 winner score"
+                    />
+                    <span className={styles.name}>{higherR2 ?? 'Higher R2 winner'}</span>
+                  </div>
+                  {r3g2Winner && (
+                    <p className={styles.gameLabel}>
+                      Winner: <span className={styles.winner}>{r3g2Winner}</span>
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.round}>
+              <h3 className={styles.roundTitle}>Championship</h3>
+              <div className={styles.games}>
+                <div className={`${styles.game} ${finalsWinnerS6 ? styles.gameChampion : ''}`}>
+                  <div className={styles.slot}>
+                    <span className={styles.name}>{r3g1Winner ?? 'R3 winner 1'}</span>
+                    <input
+                      type="number"
+                      className={`${styles.scoreInput} ${!isAuthenticated ? styles.viewOnly : ''}`}
+                      placeholder="—"
+                      value={scores.finals.score1}
+                      onChange={(e) => setGameScore('finals', 'score1', e.target.value)}
+                      min={0}
+                      disabled={!isAuthenticated}
+                      aria-label="Championship score 1"
+                    />
+                  </div>
+                  <span className={styles.vs}>vs</span>
+                  <div className={styles.slot}>
+                    <input
+                      type="number"
+                      className={`${styles.scoreInput} ${!isAuthenticated ? styles.viewOnly : ''}`}
+                      placeholder="—"
+                      value={scores.finals.score2}
+                      onChange={(e) => setGameScore('finals', 'score2', e.target.value)}
+                      min={0}
+                      disabled={!isAuthenticated}
+                      aria-label="Championship score 2"
+                    />
+                    <span className={styles.name}>{r3g2Winner ?? 'R3 winner 2'}</span>
+                  </div>
+                  {finalsWinnerS6 && (
+                    <p className={styles.gameLabel}>
+                      Champion: <span className={styles.winner}>{finalsWinnerS6}</span>
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
       {!isLoading && useDatabase && leaderboard.length === 0 && (
         <p className={styles.unavailable}>No playoff scores for this season yet.</p>
