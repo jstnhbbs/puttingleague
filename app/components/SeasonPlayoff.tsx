@@ -167,8 +167,10 @@ export function SeasonPlayoff({ seasonId, isAuthenticated }: SeasonPlayoffProps)
       )}
       {isSeason6 && (
         <p className={styles.subtitle}>
-          Round 1: 5v8 and 6v7. Round 2: 3 vs lower‑seeded R1 winner, 4 vs higher‑seeded R1 winner.
-          Round 3: 1 vs lower‑seeded R2 winner, 2 vs higher‑seeded R2 winner. Championship: R3 winners.
+          Round 1: 5v8 and 6v7. <br />
+          Round 2: 3 vs lower‑seeded R1 winner, 4 vs higher‑seeded R1 winner. <br />
+          Round 3: 1 vs lower‑seeded R2 winner, 2 vs higher‑seeded R2 winner. <br />
+          Championship: R3 winners.
         </p>
       )}
 
