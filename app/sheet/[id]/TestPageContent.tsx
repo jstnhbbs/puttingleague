@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from 'react'
 import Link from 'next/link'
 import styles from './TestPageContent.module.css'
 import { fetchCells, saveCells, checkHealth, type Cell as APICell } from '../../lib/api'
+import { SeasonPlayoff } from '../../components/SeasonPlayoff'
 
 interface Cell {
     value: string
@@ -559,6 +560,8 @@ export default function TestPageContent({ sheetTitle, seasonId }: TestPageConten
                         )}
                     </ul>
                 </div>
+
+                <SeasonPlayoff seasonId={seasonId} isAuthenticated={isAuthenticated} />
 
                 {/* Password prompt modal overlay */}
                 {showPasswordPrompt && !isAuthenticated && (
