@@ -2,12 +2,13 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { fetchCells, checkHealth } from '../lib/api'
+import { fetchCells, checkHealth, fetchPlayoffScores, savePlayoffScore } from '../lib/api'
 import { getLeaderboardFromCells, type LeaderboardEntry } from '../lib/playoffUtils'
 import styles from './page.module.css'
 
 const EARLY_SEASONS = ['season1', 'season2', 'season3', 'season4'] as const
 const EARLY_COLUMN_NAMES = ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Brad']
+const EDIT_PASSWORD = 'admin123' // Same as sheet edit password
 
 type GameId = 'r1g1' | 'r1g2' | 'r1last' | 'finals'
 
@@ -38,6 +39,10 @@ export default function PlayoffTestPage() {
   const [scores, setScores] = useState<Record<GameId, GameScore>>(DEFAULT_SCORES)
   const [isLoading, setIsLoading] = useState(true)
   const [useDatabase, setUseDatabase] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [showPasswordPrompt, setShowPasswordPrompt] = useState(false)
+  const [passwordInput, setPasswordInput] = useState('')
+  const [passwordError, setPasswordError] = useState('')
 
   const loadSeason = useCallback(async () => {
     setIsLoading(true)
@@ -45,6 +50,7 @@ export default function PlayoffTestPage() {
     setUseDatabase(dbAvailable)
     if (!dbAvailable) {
       setLeaderboard([])
+      setScores(DEFAULT_SCORES)
       setIsLoading(false)
       return
     }
@@ -52,9 +58,23 @@ export default function PlayoffTestPage() {
       const cells = await fetchCells(seasonId)
       const entries = getLeaderboardFromCells(cells, EARLY_COLUMN_NAMES)
       setLeaderboard(entries)
+
+      const playoff = await fetchPlayoffScores(seasonId)
+      const nextScores: Record<GameId, GameScore> = { ...DEFAULT_SCORES }
+      (Object.keys(nextScores) as GameId[]).forEach((gameKey) => {
+        const data = playoff[gameKey]
+        if (data) {
+          nextScores[gameKey] = {
+            score1: data.score1 != null ? String(data.score1) : '',
+            score2: data.score2 != null ? String(data.score2) : '',
+          }
+        }
+      })
+      setScores(nextScores)
     } catch (e) {
       console.error('Error loading season:', e)
       setLeaderboard([])
+      setScores(DEFAULT_SCORES)
     } finally {
       setIsLoading(false)
     }
@@ -64,11 +84,49 @@ export default function PlayoffTestPage() {
     loadSeason()
   }, [loadSeason])
 
+  useEffect(() => {
+    const auth = typeof window !== 'undefined' ? localStorage.getItem('testPageAuth') : null
+    setIsAuthenticated(auth === 'authenticated')
+  }, [])
+
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (passwordInput === EDIT_PASSWORD) {
+      setIsAuthenticated(true)
+      setShowPasswordPrompt(false)
+      setPasswordError('')
+      if (typeof window !== 'undefined') localStorage.setItem('testPageAuth', 'authenticated')
+    } else {
+      setPasswordError('Incorrect password.')
+      setPasswordInput('')
+    }
+  }
+
+  const handleLogout = () => {
+    setIsAuthenticated(false)
+    if (typeof window !== 'undefined') localStorage.removeItem('testPageAuth')
+  }
+
   const setGameScore = (game: GameId, side: 'score1' | 'score2', value: string) => {
-    setScores((prev) => ({
-      ...prev,
-      [game]: { ...prev[game], [side]: value },
-    }))
+    if (!isAuthenticated) return
+    setScores((prev) => {
+      const updated: Record<GameId, GameScore> = {
+        ...prev,
+        [game]: { ...prev[game], [side]: value },
+      }
+      const current = updated[game]
+      const s1 = parseFloat(current.score1)
+      const s2 = parseFloat(current.score2)
+      void savePlayoffScore(
+        game,
+        {
+          score1: !Number.isNaN(s1) ? s1 : null,
+          score2: !Number.isNaN(s2) ? s2 : null,
+        },
+        seasonId
+      )
+      return updated
+    })
   }
 
   const seed = (n: number): LeaderboardEntry | undefined => leaderboard.find((e) => e.seed === n)
@@ -85,9 +143,23 @@ export default function PlayoffTestPage() {
         <Link href="/" className={styles.backLink}>
           ← Back to Home
         </Link>
-        <h1 className={styles.title}>Playoff Bracket (6‑player test)</h1>
+        <div className={styles.headerRow}>
+          <h1 className={styles.title}>Playoff Bracket (6‑player test)</h1>
+          <div className={styles.headerButtons}>
+            {!isAuthenticated && (
+              <button type="button" onClick={() => { setShowPasswordPrompt(true); setPasswordError(''); setPasswordInput(''); }} className={styles.unlockButton}>
+                🔓 Unlock Editing
+              </button>
+            )}
+            {isAuthenticated && (
+              <button type="button" onClick={handleLogout} className={styles.logoutButton}>
+                🔒 Lock Editing
+              </button>
+            )}
+          </div>
+        </div>
         <p className={styles.subtitle}>
-          Seasons 1–4: top 4 seeds play semifinals + finals; seeds 5 & 6 play last‑place match.
+          {isAuthenticated ? 'Scores are editable. Not saved to database yet.' : 'View-only — enter admin password to edit scores.'}
         </p>
 
         <div className={styles.seasonSelect}>
@@ -127,11 +199,12 @@ export default function PlayoffTestPage() {
                     <span className={styles.name}>{name(1)}</span>
                     <input
                       type="number"
-                      className={styles.scoreInput}
+                      className={`${styles.scoreInput} ${!isAuthenticated ? styles.viewOnly : ''}`}
                       placeholder="—"
                       value={scores.r1g1.score1}
                       onChange={(e) => setGameScore('r1g1', 'score1', e.target.value)}
                       min={0}
+                      disabled={!isAuthenticated}
                       aria-label={`${name(1)} score`}
                     />
                   </div>
@@ -139,11 +212,12 @@ export default function PlayoffTestPage() {
                   <div className={styles.slot}>
                     <input
                       type="number"
-                      className={styles.scoreInput}
+                      className={`${styles.scoreInput} ${!isAuthenticated ? styles.viewOnly : ''}`}
                       placeholder="—"
                       value={scores.r1g1.score2}
                       onChange={(e) => setGameScore('r1g1', 'score2', e.target.value)}
                       min={0}
+                      disabled={!isAuthenticated}
                       aria-label={`${name(4)} score`}
                     />
                     <span className={styles.name}>{name(4)}</span>
@@ -161,11 +235,12 @@ export default function PlayoffTestPage() {
                     <span className={styles.name}>{name(2)}</span>
                     <input
                       type="number"
-                      className={styles.scoreInput}
+                      className={`${styles.scoreInput} ${!isAuthenticated ? styles.viewOnly : ''}`}
                       placeholder="—"
                       value={scores.r1g2.score1}
                       onChange={(e) => setGameScore('r1g2', 'score1', e.target.value)}
                       min={0}
+                      disabled={!isAuthenticated}
                       aria-label={`${name(2)} score`}
                     />
                   </div>
@@ -173,11 +248,12 @@ export default function PlayoffTestPage() {
                   <div className={styles.slot}>
                     <input
                       type="number"
-                      className={styles.scoreInput}
+                      className={`${styles.scoreInput} ${!isAuthenticated ? styles.viewOnly : ''}`}
                       placeholder="—"
                       value={scores.r1g2.score2}
                       onChange={(e) => setGameScore('r1g2', 'score2', e.target.value)}
                       min={0}
+                      disabled={!isAuthenticated}
                       aria-label={`${name(3)} score`}
                     />
                     <span className={styles.name}>{name(3)}</span>
@@ -195,11 +271,12 @@ export default function PlayoffTestPage() {
                     <span className={styles.name}>{name(5)}</span>
                     <input
                       type="number"
-                      className={styles.scoreInput}
+                      className={`${styles.scoreInput} ${!isAuthenticated ? styles.viewOnly : ''}`}
                       placeholder="—"
                       value={scores.r1last.score1}
                       onChange={(e) => setGameScore('r1last', 'score1', e.target.value)}
                       min={0}
+                      disabled={!isAuthenticated}
                       aria-label={`${name(5)} score`}
                     />
                   </div>
@@ -207,11 +284,12 @@ export default function PlayoffTestPage() {
                   <div className={styles.slot}>
                     <input
                       type="number"
-                      className={styles.scoreInput}
+                      className={`${styles.scoreInput} ${!isAuthenticated ? styles.viewOnly : ''}`}
                       placeholder="—"
                       value={scores.r1last.score2}
                       onChange={(e) => setGameScore('r1last', 'score2', e.target.value)}
                       min={0}
+                      disabled={!isAuthenticated}
                       aria-label={`${name(6)} score`}
                     />
                     <span className={styles.name}>{name(6)}</span>
@@ -235,11 +313,12 @@ export default function PlayoffTestPage() {
                     <span className={styles.name}>{r1g1Winner ?? 'Winner 1v4'}</span>
                     <input
                       type="number"
-                      className={styles.scoreInput}
+                      className={`${styles.scoreInput} ${!isAuthenticated ? styles.viewOnly : ''}`}
                       placeholder="—"
                       value={scores.finals.score1}
                       onChange={(e) => setGameScore('finals', 'score1', e.target.value)}
                       min={0}
+                      disabled={!isAuthenticated}
                       aria-label="Finals score 1"
                     />
                   </div>
@@ -247,11 +326,12 @@ export default function PlayoffTestPage() {
                   <div className={styles.slot}>
                     <input
                       type="number"
-                      className={styles.scoreInput}
+                      className={`${styles.scoreInput} ${!isAuthenticated ? styles.viewOnly : ''}`}
                       placeholder="—"
                       value={scores.finals.score2}
                       onChange={(e) => setGameScore('finals', 'score2', e.target.value)}
                       min={0}
+                      disabled={!isAuthenticated}
                       aria-label="Finals score 2"
                     />
                     <span className={styles.name}>{r1g2Winner ?? 'Winner 2v3'}</span>
@@ -267,6 +347,43 @@ export default function PlayoffTestPage() {
 
         {!isLoading && useDatabase && leaderboard.length === 0 && (
           <p className={styles.unavailable}>No score data for this season yet.</p>
+        )}
+
+        {showPasswordPrompt && (
+          <div
+            className={styles.modalOverlay}
+            onClick={() => { setShowPasswordPrompt(false); setPasswordError(''); setPasswordInput(''); }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="playoff-password-title"
+          >
+            <div className={styles.passwordPrompt} onClick={(e) => e.stopPropagation()}>
+              <h2 id="playoff-password-title" className={styles.passwordTitle}>Enter admin password</h2>
+              <p className={styles.passwordSubtitle}>Unlock editing for playoff scores.</p>
+              <form onSubmit={handlePasswordSubmit} className={styles.passwordForm}>
+                <input
+                  type="password"
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                  className={styles.passwordInput}
+                  placeholder="Password"
+                  autoFocus
+                  aria-label="Admin password"
+                />
+                {passwordError && <p className={styles.passwordError}>{passwordError}</p>}
+                <div className={styles.passwordButtons}>
+                  <button type="submit" className={styles.passwordButton}>Unlock</button>
+                  <button
+                    type="button"
+                    className={styles.viewOnlyButton}
+                    onClick={() => { setShowPasswordPrompt(false); setPasswordError(''); setPasswordInput(''); }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
         )}
       </div>
     </main>

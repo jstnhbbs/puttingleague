@@ -12,6 +12,13 @@ export interface CellsResponse {
     [key: string]: Cell
 }
 
+export interface PlayoffScore {
+    score1: number | null
+    score2: number | null
+}
+
+export type PlayoffScoresResponse = Record<string, PlayoffScore>
+
 // Fetch all cells from the server for a specific season
 export async function fetchCells(seasonId: string = 'season6'): Promise<CellsResponse> {
     try {
@@ -74,6 +81,67 @@ export async function saveCell(cellKey: string, cell: Cell, seasonId: string = '
         return response.ok
     } catch (error) {
         console.error('Error saving cell:', error)
+        return false
+    }
+}
+
+// Fetch playoff scores for a specific season
+export async function fetchPlayoffScores(seasonId: string = 'season6'): Promise<PlayoffScoresResponse> {
+    try {
+        console.log('Fetching playoff scores from:', `${API_URL}/api/playoff?season=${seasonId}`)
+        const response = await fetch(`${API_URL}/api/playoff?season=${encodeURIComponent(seasonId)}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        if (!response.ok) {
+            const text = await response.text()
+            console.error('Failed to fetch playoff scores:', response.status, response.statusText, text)
+            throw new Error(`Failed to fetch playoff scores: ${response.status}`)
+        }
+        const contentType = response.headers.get('content-type')
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text()
+            console.error('Playoff response is not JSON. Content-Type:', contentType)
+            console.error('Response body:', text.substring(0, 200))
+            throw new Error('Playoff response is not JSON')
+        }
+        const data = (await response.json()) as PlayoffScoresResponse
+        return data
+    } catch (error) {
+        console.error('Error fetching playoff scores:', error)
+        return {}
+    }
+}
+
+// Save a single playoff game score
+export async function savePlayoffScore(
+    gameKey: string,
+    score: PlayoffScore,
+    seasonId: string = 'season6'
+): Promise<boolean> {
+    try {
+        const response = await fetch(`${API_URL}/api/playoff`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                seasonId,
+                gameKey,
+                score1: score.score1,
+                score2: score.score2,
+            }),
+        })
+        if (!response.ok) {
+            const text = await response.text()
+            console.error('Failed to save playoff score:', response.status, response.statusText, text)
+            return false
+        }
+        return true
+    } catch (error) {
+        console.error('Error saving playoff score:', error)
         return false
     }
 }
