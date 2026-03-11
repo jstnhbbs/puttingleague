@@ -43,22 +43,3 @@ export const sheets: Sheet[] = [
     sheetUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQbJtP2iVNdFvBKQiZeMJIuiEsLY5M8mv3hcGFXXxJSinxSWWJaBdCtaNZWILdAiT3iOafQoDlpD95N/pubhtml?gid=154588723&single=true',
   },
 ]
-
-// Convert Google Sheets sharing URL to embed URL
-export function getEmbedUrl(sheetUrl: string): string {
-  // Check if URL is already a published HTML URL (pubhtml) - these can be embedded directly
-  if (sheetUrl.includes('/pubhtml')) {
-    return sheetUrl
-  }
-
-  // Extract the sheet ID from standard sharing URLs
-  const match = sheetUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/)
-  if (match && match[1]) {
-    const sheetId = match[1]
-    // Return the embed URL using the extracted sheet ID
-    return `https://docs.google.com/spreadsheets/d/${sheetId}/preview`
-  }
-
-  // Fallback: return original URL
-  return sheetUrl
-}

@@ -3,13 +3,8 @@
 import { useState, useCallback, useEffect } from 'react'
 import Link from 'next/link'
 import styles from './TestPageContent.module.css'
-import { fetchCells, saveCells, checkHealth, type Cell as APICell } from '../../lib/api'
+import { fetchCells, saveCells, checkHealth, type Cell } from '../../lib/api'
 import { SeasonPlayoff } from '../../components/SeasonPlayoff'
-
-interface Cell {
-    value: string
-    isFormula: boolean
-}
 
 const ROWS = 12
 // Set your password here - change this to your desired password
@@ -30,12 +25,12 @@ const getColumnConfig = (seasonId: string) => {
     if (seasonId === 'season6') {
         return {
             cols: 8,
-            columnNames: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Graham', 'Tyler','Brad']
+            columnNames: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Graham', 'Tyler', 'Brad']
         }
     }
     return {
         cols: 7,
-        columnNames: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Tyler', 'Brad',]
+        columnNames: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Tyler', 'Brad']
     }
 }
 
@@ -65,31 +60,22 @@ export default function TestPageContent({ sheetTitle, seasonId }: TestPageConten
         const loadCells = async () => {
             setIsLoading(true)
 
-            // First, try to use the database
-            console.log(`Checking database availability for season ${seasonId}...`)
             const dbAvailable = await checkHealth()
-            console.log('Database available:', dbAvailable)
             setUseDatabase(dbAvailable)
 
             if (dbAvailable) {
                 try {
-                    console.log(`Loading cells from database for season ${seasonId}...`)
                     const savedCells = await fetchCells(seasonId)
                     if (Object.keys(savedCells).length > 0) {
-                        console.log('Loaded', Object.keys(savedCells).length, 'cells from database')
                         setCells(savedCells)
                     } else {
-                        console.log('No cells in database, checking localStorage...')
                         loadFromLocalStorage()
                     }
                 } catch (error) {
                     console.error('Error loading from database, falling back to localStorage:', error)
-                    // Fallback to localStorage
                     loadFromLocalStorage()
                 }
             } else {
-                console.log('Database not available, loading from localStorage...')
-                // Fallback to localStorage if database is not available
                 loadFromLocalStorage()
             }
 
@@ -102,10 +88,7 @@ export default function TestPageContent({ sheetTitle, seasonId }: TestPageConten
                 const savedCells = localStorage.getItem(storageKey)
                 if (savedCells) {
                     const parsed = JSON.parse(savedCells)
-                    console.log('Loaded', Object.keys(parsed).length, 'cells from localStorage')
                     setCells(parsed)
-                } else {
-                    console.log('No cells in localStorage either')
                 }
             } catch (error) {
                 console.error('Error loading cells from localStorage:', error)
@@ -123,11 +106,8 @@ export default function TestPageContent({ sheetTitle, seasonId }: TestPageConten
             const storageKey = getStorageKey(seasonId)
             if (useDatabase) {
                 try {
-                    console.log(`Attempting to save to database for season ${seasonId}...`)
                     const success = await saveCells(cells, seasonId)
-                    if (success) {
-                        console.log('Successfully saved to database')
-                    } else {
+                    if (!success) {
                         console.warn('Failed to save to database, falling back to localStorage')
                         // Fallback to localStorage
                         try {
@@ -146,8 +126,6 @@ export default function TestPageContent({ sheetTitle, seasonId }: TestPageConten
                     }
                 }
             } else {
-                // Use localStorage as fallback
-                console.log('Database not available, saving to localStorage')
                 try {
                     localStorage.setItem(storageKey, JSON.stringify(cells))
                 } catch (error) {
@@ -585,7 +563,7 @@ export default function TestPageContent({ sheetTitle, seasonId }: TestPageConten
                         </div>
                     </div>
                 )}
-                
+
                 <div className={styles.instructions}>
                     <h3>Instructions:</h3>
                     <ul>

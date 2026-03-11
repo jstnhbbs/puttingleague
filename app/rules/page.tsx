@@ -19,7 +19,7 @@ export default function RulesPage() {
             <ul className={styles.list}>
               <li>Each season consists of 10 weeks.</li>
               <li>Each week consists of 4 rounds of 10 putts each from distances of 20, 25, 30, and 35 feet and 1 Bonus Round.</li>
-              <li>Each week, one putting distance is replace with an Obstacle Putt. The Obstacle Putt is a putt determined by a wheel spin to determine a distance and putt style for the week.</li>
+              <li>Each week, one putting distance is replaced with an Obstacle Putt. The Obstacle Putt is a putt determined by a wheel spin to determine a distance and putt style for the week.</li>
               <li>Each week, all players draw a card that can positively or negatively affect their score for the week.</li>
               <li>Cards are not allowed to be used in the Bonus Round.</li>
               <li>Respectful conduct is required at all times.</li>

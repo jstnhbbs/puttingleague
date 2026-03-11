@@ -22,7 +22,6 @@ export type PlayoffScoresResponse = Record<string, PlayoffScore>
 // Fetch all cells from the server for a specific season
 export async function fetchCells(seasonId: string = 'season6'): Promise<CellsResponse> {
     try {
-        console.log('Fetching cells from:', `${API_URL}/api/cells?season=${seasonId}`)
         // Add timeout to prevent hanging
         const controller = new AbortController()
         const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
@@ -54,7 +53,6 @@ export async function fetchCells(seasonId: string = 'season6'): Promise<CellsRes
         }
 
         const data = await response.json()
-        console.log('Fetched cells:', Object.keys(data).length, 'cells')
         return data
     } catch (error) {
         console.error('Error fetching cells:', error)
@@ -88,7 +86,6 @@ export async function saveCell(cellKey: string, cell: Cell, seasonId: string = '
 // Fetch playoff scores for a specific season
 export async function fetchPlayoffScores(seasonId: string = 'season6'): Promise<PlayoffScoresResponse> {
     try {
-        console.log('Fetching playoff scores from:', `${API_URL}/api/playoff?season=${seasonId}`)
         const response = await fetch(`${API_URL}/api/playoff?season=${encodeURIComponent(seasonId)}`, {
             method: 'GET',
             headers: {
@@ -149,9 +146,6 @@ export async function savePlayoffScore(
 // Save multiple cells to the server (batch) for a specific season
 export async function saveCells(cells: Record<string, Cell>, seasonId: string = 'season6'): Promise<boolean> {
     try {
-        const cellCount = Object.keys(cells).length
-        console.log(`Saving ${cellCount} cells to:`, `${API_URL}/api/cells/batch for season ${seasonId}`)
-
         const response = await fetch(`${API_URL}/api/cells/batch`, {
             method: 'POST',
             headers: {
@@ -179,8 +173,7 @@ export async function saveCells(cells: Record<string, Cell>, seasonId: string = 
             return false
         }
 
-        const result = await response.json()
-        console.log('Successfully saved cells:', result)
+        await response.json()
         return true
     } catch (error) {
         console.error('Error saving cells:', error)
@@ -230,8 +223,7 @@ export async function checkHealth(): Promise<boolean> {
             return false
         }
 
-        const data = await response.json()
-        console.log('Health check passed:', data)
+        await response.json()
         return true
     } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') {

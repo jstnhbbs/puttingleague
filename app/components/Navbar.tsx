@@ -35,12 +35,6 @@ export function Navbar() {
           >
             Rules
           </Link>
-          <Link
-            href="/playoff-test"
-            className={`${styles.navLink} ${pathname === '/playoff-test' ? styles.active : ''}`}
-          >
-            Playoff test
-          </Link>
           <ThemeToggle />
         </div>
       </div>
