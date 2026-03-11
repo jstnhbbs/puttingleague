@@ -381,12 +381,14 @@ export function SeasonPlayoff({ seasonId, isAuthenticated }: SeasonPlayoffProps)
             let lowerWinner: string | null = null
             let higherWinner: string | null = null
             if (r1g1WinnerS5 && r1g2WinnerS5 && sA != null && sB != null) {
+              // In this context, \"lower\" means the worse seed (higher seed number).
+              // Example: seeds 3 and 4 -> 1 should play 4, 2 should play 3.
               if (sA < sB) {
-                lowerWinner = r1g1WinnerS5
-                higherWinner = r1g2WinnerS5
+                higherWinner = r1g1WinnerS5 // better seed (smaller number)
+                lowerWinner = r1g2WinnerS5  // worse seed (larger number)
               } else {
-                lowerWinner = r1g2WinnerS5
-                higherWinner = r1g1WinnerS5
+                higherWinner = r1g2WinnerS5
+                lowerWinner = r1g1WinnerS5
               }
             }
 
