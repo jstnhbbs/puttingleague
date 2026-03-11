@@ -254,6 +254,7 @@
   padding: 1.5rem;
   box-shadow: var(--shadow-sm);
   transition: all 0.3s ease;
+  margin-top: 2rem;
 }
 
 [data-theme='dark'] .instructions {
