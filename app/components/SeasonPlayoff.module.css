@@ -81,6 +81,11 @@
   gap: 0.5rem;
 }
 
+/* Right-align left slot so matchup scores sit closer together */
+.game > .slot:first-child {
+  justify-content: flex-end;
+}
+
 .seed {
   font-weight: 700;
   color: var(--foreground-muted);
