@@ -60,7 +60,7 @@ export default function PlayoffTestPage() {
       setLeaderboard(entries)
 
       const playoff = await fetchPlayoffScores(seasonId)
-      const nextScores: Record<GameId, GameScore> = { ...DEFAULT_SCORES }
+      const nextScores: Record<GameId, GameScore> = { ...DEFAULT_SCORES };
       (Object.keys(nextScores) as GameId[]).forEach((gameKey) => {
         const data = playoff[gameKey]
         if (data) {
