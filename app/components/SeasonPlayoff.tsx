@@ -135,10 +135,15 @@ export function SeasonPlayoff({ seasonId, isAuthenticated }: SeasonPlayoffProps)
     return entry ? entry.seed : null
   }
 
-  const labelWithSeed = (playerName: string | null, fallback: string): string => {
+  const labelWithSeed = (playerName: string | null, fallback: string) => {
     if (!playerName) return fallback
     const s = getSeedNum(playerName)
-    return s != null ? `${s} - ${playerName}` : playerName
+    if (s == null) return playerName
+    return (
+      <>
+        <sup className={styles.seedSup}>{s}</sup> {playerName}
+      </>
+    )
   }
 
   const r1g1Winner = getWinner(scores.r1g1.score1, scores.r1g1.score2, name(1), name(4))
