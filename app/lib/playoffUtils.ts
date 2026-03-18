@@ -78,7 +78,8 @@ function calculateTotalMinusTwo(
   const values: number[] = []
   for (let r = 0; r <= 9; r++) {
     const valStr = getCellValue(cells, r, col, getRow12)
-    const num = parseFloat(valStr) || 0
+    if (valStr.trim() === '') continue
+    const num = parseFloat(valStr)
     if (!Number.isNaN(num)) values.push(num)
   }
   if (values.length < 2) return values.reduce((s, v) => s + v, 0)
