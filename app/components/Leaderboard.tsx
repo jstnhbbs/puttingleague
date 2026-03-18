@@ -27,7 +27,9 @@ export function Leaderboard() {
                 if (dbAvailable) {
                     try {
                         const cells = await fetchCells('season6')
-                        const entries = getLeaderboardFromCells(cells, SEASON6_COLUMNS)
+                        const entries = getLeaderboardFromCells(cells, SEASON6_COLUMNS, {
+                            calculation: 'total_minus_two_lowest',
+                        })
                         setLeaderboard(entries)
                     } catch (error) {
                         console.error('Error loading leaderboard:', error)

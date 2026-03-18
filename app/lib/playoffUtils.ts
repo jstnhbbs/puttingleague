@@ -93,20 +93,29 @@ export interface LeaderboardEntry {
   seed: number
 }
 
+export type LeaderboardCalculation = 'total' | 'total_minus_two_lowest'
+
+export interface GetLeaderboardOptions {
+  calculation?: LeaderboardCalculation
+}
+
 /**
  * Compute seeded leaderboard (1-based) from season cells using row 12 (total minus two lowest).
  */
 export function getLeaderboardFromCells(
   cells: Record<string, Cell>,
-  columnNames: string[]
+  columnNames: string[],
+  options: GetLeaderboardOptions = {}
 ): LeaderboardEntry[] {
   const cols = columnNames.length
   // Tie the knot: getRow12 uses calculateTotalMinusTwo which uses getCellValue which uses getRow12
   const getRow12: GetRow12 = (col) => calculateTotalMinusTwo(cells, col, getRow12)
   const scores: { name: string; score: number }[] = []
+  const calculation: LeaderboardCalculation = options.calculation ?? 'total_minus_two_lowest'
+  const targetRowIndex = calculation === 'total' ? 10 : ROW_12_INDEX
   for (let c = 0; c < cols; c++) {
-    const row12Val = getCellValue(cells, ROW_12_INDEX, c, getRow12)
-    const score = parseFloat(row12Val) || 0
+    const val = getCellValue(cells, targetRowIndex, c, getRow12)
+    const score = parseFloat(val) || 0
     scores.push({ name: columnNames[c] ?? `Player ${c + 1}`, score })
   }
   const sorted = [...scores].sort((a, b) => b.score - a.score)
