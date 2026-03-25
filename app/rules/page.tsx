@@ -29,7 +29,7 @@ export default function RulesPage() {
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Bonus Round</h2>
             <ul className={styles.list}>
-              <li>The Bonus Round putt is a putt determined on and voted on by the chat.</li>
+              <li>The Bonus Round putt is a putt determined on and voted on by the chat. (Even though it's only what Tyler wants...)</li>
               <li>The maximum number of points available in the Bonus Round must be 30 points. </li>
               <li>The number of points awarded for the Bonus Round putt is determined by the chat.</li>
             </ul>
