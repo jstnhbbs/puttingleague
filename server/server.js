@@ -42,6 +42,10 @@ const PLAYER_NAMES = {
 
 const EARLY_SEASONS = ['season1', 'season2', 'season3', 'season4'];
 
+function isEightPlayerSeason(seasonId) {
+    return seasonId === 'season6' || seasonId === 'season7';
+}
+
 // Create relational tables
 db.exec(`
   -- Players table
@@ -128,7 +132,8 @@ try {
         { id: 'season3', title: 'Season 3', desc: '🏆 Hunter Thomas' },
         { id: 'season4', title: 'Season 4', desc: '🏆 Trevor Staub' },
         { id: 'season5', title: 'Season 5', desc: '🏆 Trevor Staub' },
-        { id: 'season6', title: 'Season 6', desc: 'View Season 6' }
+        { id: 'season6', title: 'Season 6', desc: '🏆 Hunter Thomas' },
+        { id: 'season7', title: 'Season 7', desc: 'Current season' }
     ];
     seasons.forEach(season => {
         insertSeason.run(season.id, season.title, season.desc);
@@ -142,7 +147,7 @@ try {
     seasons.forEach(season => {
         const seasonRow = getSeasonId.get(season.id);
         if (seasonRow) {
-            const playerList = season.id === 'season6' ? PLAYER_NAMES.season6 : (EARLY_SEASONS.includes(season.id) ? PLAYER_NAMES.early : PLAYER_NAMES.late);
+            const playerList = isEightPlayerSeason(season.id) ? PLAYER_NAMES.season6 : (EARLY_SEASONS.includes(season.id) ? PLAYER_NAMES.early : PLAYER_NAMES.late);
             console.log(`Setting up ${season.id} with ${playerList.length} players: ${playerList.join(', ')}`);
             playerList.forEach((playerName, colIndex) => {
                 const playerRow = getPlayerId.get(playerName);
@@ -170,7 +175,7 @@ function cellKeyToRelational(cellKey, seasonId) {
 
     if (isNaN(row) || isNaN(col)) return null;
 
-    const playerList = seasonId === 'season6' ? PLAYER_NAMES.season6 : (EARLY_SEASONS.includes(seasonId) ? PLAYER_NAMES.early : PLAYER_NAMES.late);
+    const playerList = isEightPlayerSeason(seasonId) ? PLAYER_NAMES.season6 : (EARLY_SEASONS.includes(seasonId) ? PLAYER_NAMES.early : PLAYER_NAMES.late);
     if (col >= playerList.length) return null;
 
     return {
@@ -196,7 +201,7 @@ function ensureSeasonPlayerRelationships(seasonId) {
         return false;
     }
 
-    const playerList = seasonId === 'season6' ? PLAYER_NAMES.season6 : (EARLY_SEASONS.includes(seasonId) ? PLAYER_NAMES.early : PLAYER_NAMES.late);
+    const playerList = isEightPlayerSeason(seasonId) ? PLAYER_NAMES.season6 : (EARLY_SEASONS.includes(seasonId) ? PLAYER_NAMES.early : PLAYER_NAMES.late);
     const getPlayerId = db.prepare('SELECT id FROM players WHERE name = ?');
     const insertSeasonPlayer = db.prepare('INSERT OR IGNORE INTO season_players (season_id, player_id, display_order) VALUES (?, ?, ?)');
     const checkRelationship = db.prepare('SELECT id FROM season_players WHERE season_id = ? AND player_id = ?');
@@ -220,7 +225,7 @@ function ensureSeasonPlayerRelationships(seasonId) {
 // Get all cells for a specific season (converted from relational to cell format for backward compatibility)
 app.get('/api/cells', (req, res) => {
     try {
-        const seasonId = req.query.season || 'season6';
+        const seasonId = req.query.season || 'season7';
         console.log(`[${new Date().toISOString()}] GET /api/cells?season=${seasonId}`);
 
         res.setHeader('Content-Type', 'application/json');
@@ -232,7 +237,7 @@ app.get('/api/cells', (req, res) => {
         }
 
         const seasonDbId = seasonRow.id;
-        const playerList = seasonId === 'season6' ? PLAYER_NAMES.season6 : (EARLY_SEASONS.includes(seasonId) ? PLAYER_NAMES.early : PLAYER_NAMES.late);
+        const playerList = isEightPlayerSeason(seasonId) ? PLAYER_NAMES.season6 : (EARLY_SEASONS.includes(seasonId) ? PLAYER_NAMES.early : PLAYER_NAMES.late);
         const cells = {};
 
         // Get all scores for this season
@@ -295,7 +300,7 @@ app.get('/api/cells', (req, res) => {
 // Save a single cell (converted from cell format to relational)
 app.post('/api/cells', (req, res) => {
     try {
-        const { cellKey, value, isFormula, seasonId = 'season6' } = req.body;
+        const { cellKey, value, isFormula, seasonId = 'season7' } = req.body;
 
         if (!cellKey) {
             return res.status(400).json({ error: 'cellKey is required' });
@@ -365,7 +370,7 @@ app.post('/api/cells', (req, res) => {
 // Save multiple cells (batch update) - converted from cell format to relational
 app.post('/api/cells/batch', (req, res) => {
     try {
-        const seasonId = req.body.seasonId || 'season6';
+        const seasonId = req.body.seasonId || 'season7';
         console.log(`[${new Date().toISOString()}] POST /api/cells/batch?season=${seasonId}`);
         const { cells } = req.body;
 
@@ -500,7 +505,7 @@ app.post('/api/cells/batch', (req, res) => {
 app.delete('/api/cells/:cellKey', (req, res) => {
     try {
         const { cellKey } = req.params;
-        const seasonId = req.query.season || 'season6';
+        const seasonId = req.query.season || 'season7';
 
         const rel = cellKeyToRelational(cellKey, seasonId);
         if (!rel) {
@@ -570,7 +575,7 @@ app.get('/api/debug/season/:seasonId', (req, res) => {
             season: seasonRow,
             players: players,
             scoresCount: scoresCount.count,
-            expectedPlayers: seasonId === 'season6' ? PLAYER_NAMES.season6 : (EARLY_SEASONS.includes(seasonId) ? PLAYER_NAMES.early : PLAYER_NAMES.late)
+            expectedPlayers: isEightPlayerSeason(seasonId) ? PLAYER_NAMES.season6 : (EARLY_SEASONS.includes(seasonId) ? PLAYER_NAMES.early : PLAYER_NAMES.late)
         });
     } catch (error) {
         console.error('Error in debug endpoint:', error);

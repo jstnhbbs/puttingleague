@@ -19,7 +19,7 @@ export default function Home() {
                 <div className={styles.twoColumn}>
                     <div className={styles.leftColumn}>
                         <Leaderboard />
-                        <SeasonPlayoff seasonId="season6" isAuthenticated={false} />
+                        <SeasonPlayoff seasonId="season7" isAuthenticated={false} />
                     </div>
                     <div className={styles.rightColumn}>
                         <div className={styles.grid}>

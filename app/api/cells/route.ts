@@ -5,6 +5,7 @@ import {
   getPlayerListForSeason,
   cellKeyToRelational,
   relationalToCellKey,
+  ensureSeasonCatalog,
   type DbRow,
 } from '../../lib/db'
 
@@ -44,8 +45,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({}, { status: 200 })
   }
   try {
-    const seasonId = (request.nextUrl.searchParams.get('season') as string) || 'season6'
+    const seasonId = (request.nextUrl.searchParams.get('season') as string) || 'season7'
     const db = getDb()
+    await ensureSeasonCatalog(db)
 
     const seasonResult = await db.execute('SELECT id FROM seasons WHERE season_id = ?', [
       seasonId,
@@ -117,7 +119,7 @@ export async function POST(request: NextRequest) {
   }
   try {
     const body = await request.json()
-    const { cellKey, value, isFormula, seasonId = 'season6' } = body as {
+    const { cellKey, value, isFormula, seasonId = 'season7' } = body as {
       cellKey?: string
       value?: string
       isFormula?: boolean
@@ -133,6 +135,7 @@ export async function POST(request: NextRequest) {
     }
 
     const db = getDb()
+    await ensureSeasonCatalog(db)
     await ensureSeasonPlayerRelationships(db, seasonId)
 
     const seasonR = await db.execute('SELECT id FROM seasons WHERE season_id = ?', [seasonId])

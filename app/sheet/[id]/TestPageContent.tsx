@@ -14,7 +14,7 @@ const EDIT_PASSWORD = 'admin123' // Change this to your password
 const getColumnConfig = (seasonId: string) => {
     // Seasons 1-4: 6 columns (without Tyler)
     // Season 5: 7 columns (with Tyler)
-    // Season 6: 8 columns (with Tyler + 8th player)
+    // Seasons 6–7: 8 columns (with Tyler + 8th player)
     const isEarlySeason = ['season1', 'season2', 'season3', 'season4'].includes(seasonId)
     if (isEarlySeason) {
         return {
@@ -22,7 +22,7 @@ const getColumnConfig = (seasonId: string) => {
             columnNames: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Brad']
         }
     }
-    if (seasonId === 'season6') {
+    if (seasonId === 'season6' || seasonId === 'season7') {
         return {
             cols: 8,
             columnNames: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Graham', 'Tyler', 'Brad']

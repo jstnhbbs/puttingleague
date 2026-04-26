@@ -3,6 +3,7 @@ import {
   getDb,
   isTursoConfigured,
   cellKeyToRelational,
+  ensureSeasonCatalog,
   type DbRow,
 } from '../../../lib/db'
 
@@ -15,7 +16,7 @@ export async function DELETE(
   }
   try {
     const { cellKey } = await params
-    const seasonId = request.nextUrl.searchParams.get('season') || 'season6'
+    const seasonId = request.nextUrl.searchParams.get('season') || 'season7'
 
     const rel = cellKeyToRelational(cellKey, seasonId)
     if (!rel) {
@@ -23,6 +24,7 @@ export async function DELETE(
     }
 
     const db = getDb()
+    await ensureSeasonCatalog(db)
     const seasonR = await db.execute('SELECT id FROM seasons WHERE season_id = ?', [seasonId])
     const seasonRow = (seasonR.rows as DbRow[])[0]
     const playerR = await db.execute('SELECT id FROM players WHERE name = ?', [rel.playerName])

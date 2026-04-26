@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb, isTursoConfigured, type DbRow } from '../../lib/db'
+import { getDb, isTursoConfigured, ensureSeasonCatalog, type DbRow } from '../../lib/db'
 
 async function ensurePlayoffTable() {
   const db = getDb()
@@ -22,8 +22,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({}, { status: 200 })
   }
   try {
-    const seasonId = (request.nextUrl.searchParams.get('season') as string) || 'season6'
+    const seasonId = (request.nextUrl.searchParams.get('season') as string) || 'season7'
     const db = await ensurePlayoffTable()
+    await ensureSeasonCatalog(db)
 
     const seasonResult = await db.execute('SELECT id FROM seasons WHERE season_id = ?', [
       seasonId,
@@ -59,7 +60,7 @@ export async function POST(request: NextRequest) {
   }
   try {
     const body = await request.json()
-    const { seasonId = 'season6', gameKey, score1, score2 } = body as {
+    const { seasonId = 'season7', gameKey, score1, score2 } = body as {
       seasonId?: string
       gameKey?: string
       score1?: number | null
@@ -71,6 +72,7 @@ export async function POST(request: NextRequest) {
     }
 
     const db = await ensurePlayoffTable()
+    await ensureSeasonCatalog(db)
 
     const seasonResult = await db.execute('SELECT id FROM seasons WHERE season_id = ?', [
       seasonId,

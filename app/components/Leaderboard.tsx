@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { fetchCells, checkHealth } from '../lib/api'
+import { EIGHT_PLAYER_COLUMNS } from '../lib/seasons'
 import { getLeaderboardFromCells } from '../lib/playoffUtils'
 import type { LeaderboardEntry } from '../lib/playoffUtils'
 import styles from './Leaderboard.module.css'
-
-const SEASON6_COLUMNS = ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Graham', 'Tyler', 'Brad']
 
 export function Leaderboard() {
     const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
@@ -26,8 +25,8 @@ export function Leaderboard() {
 
                 if (dbAvailable) {
                     try {
-                        const cells = await fetchCells('season6')
-                        const entries = getLeaderboardFromCells(cells, SEASON6_COLUMNS, {
+                        const cells = await fetchCells('season7')
+                        const entries = getLeaderboardFromCells(cells, [...EIGHT_PLAYER_COLUMNS], {
                             calculation: 'total_minus_two_lowest',
                         })
                         setLeaderboard(entries)
@@ -53,7 +52,7 @@ export function Leaderboard() {
     if (!mounted || isLoading) {
         return (
             <div className={styles.leaderboard}>
-                <h3 className={styles.title}>Leaderboard</h3>
+                <h3 className={styles.title}>Season 7 leaderboard (w/ drops)</h3>
                 <p className={styles.loading}>Loading...</p>
             </div>
         )
@@ -62,7 +61,7 @@ export function Leaderboard() {
     if (!useDatabase) {
         return (
             <div className={styles.leaderboard}>
-                <h3 className={styles.title}>Leaderboard</h3>
+                <h3 className={styles.title}>Season 7 leaderboard (w/ drops)</h3>
                 <p className={styles.unavailable}>Database unavailable</p>
             </div>
         )
@@ -70,7 +69,7 @@ export function Leaderboard() {
 
     return (
         <div className={styles.leaderboard}>
-            <h3 className={styles.title}>Leaderboard (w/ Drops)</h3>
+            <h3 className={styles.title}>Season 7 leaderboard (w/ drops)</h3>
             <table className={styles.table}>
                 <thead>
                     <tr>

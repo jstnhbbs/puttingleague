@@ -132,7 +132,8 @@ try {
         { id: 'season3', title: 'Season 3', desc: '🏆 Hunter Thomas' },
         { id: 'season4', title: 'Season 4', desc: '🏆 Trevor Staub' },
         { id: 'season5', title: 'Season 5', desc: '🏆 Trevor Staub' },
-        { id: 'season6', title: 'Season 6', desc: 'View Season 6' }
+        { id: 'season6', title: 'Season 6', desc: '🏆 Hunter Thomas' },
+        { id: 'season7', title: 'Season 7', desc: 'Current season' }
     ];
     
     seasons.forEach(season => {

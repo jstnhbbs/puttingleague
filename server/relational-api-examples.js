@@ -12,7 +12,7 @@
 // Get all scores for a specific season
 app.get('/api/relational/scores/:seasonId', (req, res) => {
     try {
-        const { seasonId } = req.params; // e.g., 'season6'
+        const { seasonId } = req.params; // e.g., 'season7'
         
         const stmt = db.prepare(`
             SELECT 

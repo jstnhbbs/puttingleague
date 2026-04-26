@@ -39,7 +39,13 @@ export const sheets: Sheet[] = [
   {
     id: 'season6',
     title: 'Season 6',
-    description: 'View Season 6',
+    description: '🏆 Hunter Thomas',
+    sheetUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQbJtP2iVNdFvBKQiZeMJIuiEsLY5M8mv3hcGFXXxJSinxSWWJaBdCtaNZWILdAiT3iOafQoDlpD95N/pubhtml?gid=154588723&single=true',
+  },
+  {
+    id: 'season7',
+    title: 'Season 7',
+    description: 'Current season',
     sheetUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQbJtP2iVNdFvBKQiZeMJIuiEsLY5M8mv3hcGFXXxJSinxSWWJaBdCtaNZWILdAiT3iOafQoDlpD95N/pubhtml?gid=154588723&single=true',
   },
 ]

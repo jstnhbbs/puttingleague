@@ -4,6 +4,7 @@ import {
   isTursoConfigured,
   getPlayerListForSeason,
   cellKeyToRelational,
+  ensureSeasonCatalog,
   type DbRow,
 } from '../../../lib/db'
 
@@ -44,13 +45,14 @@ export async function POST(request: NextRequest) {
   }
   try {
     const body = await request.json()
-    const seasonId = (body.seasonId as string) || 'season6'
+    const seasonId = (body.seasonId as string) || 'season7'
     const cells = body.cells as Record<string, { value?: string; isFormula?: boolean }> | undefined
     if (!cells || typeof cells !== 'object') {
       return NextResponse.json({ error: 'cells object is required' }, { status: 400 })
     }
 
     const db = getDb()
+    await ensureSeasonCatalog(db)
     const seasonR = await db.execute('SELECT id FROM seasons WHERE season_id = ?', [seasonId])
     const seasonRow = (seasonR.rows as DbRow[])[0]
     if (!seasonRow) {

@@ -20,7 +20,7 @@ export interface PlayoffScore {
 export type PlayoffScoresResponse = Record<string, PlayoffScore>
 
 // Fetch all cells from the server for a specific season
-export async function fetchCells(seasonId: string = 'season6'): Promise<CellsResponse> {
+export async function fetchCells(seasonId: string = 'season7'): Promise<CellsResponse> {
     try {
         // Add timeout to prevent hanging
         const controller = new AbortController()
@@ -62,7 +62,7 @@ export async function fetchCells(seasonId: string = 'season6'): Promise<CellsRes
 }
 
 // Save a single cell to the server for a specific season
-export async function saveCell(cellKey: string, cell: Cell, seasonId: string = 'season6'): Promise<boolean> {
+export async function saveCell(cellKey: string, cell: Cell, seasonId: string = 'season7'): Promise<boolean> {
     try {
         const response = await fetch(`${API_URL}/api/cells`, {
             method: 'POST',
@@ -84,7 +84,7 @@ export async function saveCell(cellKey: string, cell: Cell, seasonId: string = '
 }
 
 // Fetch playoff scores for a specific season
-export async function fetchPlayoffScores(seasonId: string = 'season6'): Promise<PlayoffScoresResponse> {
+export async function fetchPlayoffScores(seasonId: string = 'season7'): Promise<PlayoffScoresResponse> {
     try {
         const response = await fetch(`${API_URL}/api/playoff?season=${encodeURIComponent(seasonId)}`, {
             method: 'GET',
@@ -116,7 +116,7 @@ export async function fetchPlayoffScores(seasonId: string = 'season6'): Promise<
 export async function savePlayoffScore(
     gameKey: string,
     score: PlayoffScore,
-    seasonId: string = 'season6'
+    seasonId: string = 'season7'
 ): Promise<boolean> {
     try {
         const response = await fetch(`${API_URL}/api/playoff`, {
@@ -144,7 +144,7 @@ export async function savePlayoffScore(
 }
 
 // Save multiple cells to the server (batch) for a specific season
-export async function saveCells(cells: Record<string, Cell>, seasonId: string = 'season6'): Promise<boolean> {
+export async function saveCells(cells: Record<string, Cell>, seasonId: string = 'season7'): Promise<boolean> {
     try {
         const response = await fetch(`${API_URL}/api/cells/batch`, {
             method: 'POST',
@@ -182,7 +182,7 @@ export async function saveCells(cells: Record<string, Cell>, seasonId: string = 
 }
 
 // Delete a cell from the server for a specific season
-export async function deleteCell(cellKey: string, seasonId: string = 'season6'): Promise<boolean> {
+export async function deleteCell(cellKey: string, seasonId: string = 'season7'): Promise<boolean> {
     try {
         const response = await fetch(`${API_URL}/api/cells/${cellKey}?season=${encodeURIComponent(seasonId)}`, {
             method: 'DELETE',

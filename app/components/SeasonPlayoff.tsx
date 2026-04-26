@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { fetchCells, fetchPlayoffScores, savePlayoffScore, checkHealth } from '../lib/api'
+import { EIGHT_PLAYER_COLUMNS, isEightPlayerSeason } from '../lib/seasons'
 import { getLeaderboardFromCells, type LeaderboardEntry } from '../lib/playoffUtils'
 import styles from './SeasonPlayoff.module.css'
 
@@ -27,7 +28,6 @@ const DEFAULT_SCORES: Record<GameId, GameScore> = {
 const EARLY_SEASONS = ['season1', 'season2', 'season3', 'season4'] as const
 const EARLY_COLUMN_NAMES = ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Brad']
 const SEASON5_COLUMNS = ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Tyler', 'Brad']
-const SEASON6_COLUMNS = ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Graham', 'Tyler', 'Brad']
 
 function getWinner(score1: string, score2: string, name1: string, name2: string): string | null {
   const a = parseFloat(score1)
@@ -46,9 +46,9 @@ interface SeasonPlayoffProps {
 export function SeasonPlayoff({ seasonId, isAuthenticated }: SeasonPlayoffProps) {
   const isEarly = EARLY_SEASONS.includes(seasonId as (typeof EARLY_SEASONS)[number])
   const isSeason5 = seasonId === 'season5'
-  const isSeason6 = seasonId === 'season6'
+  const isEightPlayer = isEightPlayerSeason(seasonId)
 
-  if (!isEarly && !isSeason5 && !isSeason6) {
+  if (!isEarly && !isSeason5 && !isEightPlayer) {
     return null
   }
 
@@ -73,8 +73,8 @@ export function SeasonPlayoff({ seasonId, isAuthenticated }: SeasonPlayoffProps)
         ? EARLY_COLUMN_NAMES
         : isSeason5
           ? SEASON5_COLUMNS
-          : isSeason6
-            ? SEASON6_COLUMNS
+          : isEightPlayer
+            ? [...EIGHT_PLAYER_COLUMNS]
             : EARLY_COLUMN_NAMES
       const entries = getLeaderboardFromCells(cells, columnNames)
       setLeaderboard(entries)
@@ -98,7 +98,7 @@ export function SeasonPlayoff({ seasonId, isAuthenticated }: SeasonPlayoffProps)
     } finally {
       setIsLoading(false)
     }
-  }, [seasonId, isEarly, isSeason5, isSeason6])
+  }, [seasonId, isEarly, isSeason5, isEightPlayer])
 
   useEffect(() => {
     loadSeason()
@@ -174,7 +174,7 @@ export function SeasonPlayoff({ seasonId, isAuthenticated }: SeasonPlayoffProps)
           Championship: Finals between Round‑2 winners.
         </p>
       )}
-      {isSeason6 && (
+      {isEightPlayer && (
         <p className={styles.subtitle}>
           Round 1: 5 vs 8 and 6 vs 7 <br />
           Round 2: 3 vs lower‑seeded R1 winner, 4 vs higher‑seeded R1 winner. <br />
@@ -661,8 +661,8 @@ export function SeasonPlayoff({ seasonId, isAuthenticated }: SeasonPlayoffProps)
         </div>
       )}
 
-      {/* Season 6: 8‑player bracket */}
-      {!isLoading && useDatabase && leaderboard.length > 0 && isSeason6 && (() => {
+      {/* Seasons 6–7: 8‑player bracket */}
+      {!isLoading && useDatabase && leaderboard.length > 0 && isEightPlayer && (() => {
         const r1g1WinnerS6 = getWinner(scores.r1g1.score1, scores.r1g1.score2, name(5), name(8))
         const r1g2WinnerS6 = getWinner(scores.r1g2.score1, scores.r1g2.score2, name(6), name(7))
 
