@@ -22,6 +22,8 @@ export default function RulesPage() {
               <li>Each week, one putting distance is replaced with an Obstacle Putt. The Obstacle Putt is a putt determined by a wheel spin to determine a distance and putt style for the week.</li>
               <li>Each week, all players draw a card that can positively or negatively affect their score for the week.</li>
               <li>Cards are not allowed to be used in the Bonus Round.</li>
+              <li>Regarding tardiness, if a player arrives after their first station has been completed, they will receive a score of 0 for that round and can still participate. If they arrive after two stations have been completed, they will receive a score of 0 for that week that cannot be dropped in their overall score.</li>
+              <li>If a player goes out of turn, 2 points are deducted from their score.</li>
               <li>Respectful conduct is required at all times.</li>
             </ul>
           </section>
@@ -35,14 +37,14 @@ export default function RulesPage() {
             </ul>
           </section>
 
-          <section className={styles.section}>
+          {/* <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Schedule</h2>
             <p className={styles.text}>
               Matches are held weekly. Check the schedule for specific dates and
               times. Participants must arrive 15 minutes before their scheduled
               tee time.
             </p>
-          </section>
+          </section> */}
 
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Contact</h2>
