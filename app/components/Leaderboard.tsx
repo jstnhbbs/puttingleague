@@ -67,32 +67,51 @@ export function Leaderboard() {
         )
     }
 
+    const leaderScore = leaderboard[0]?.score ?? 0
+
     return (
         <div className={styles.leaderboard}>
             <h3 className={styles.title}>Season 7 leaderboard (w/ drops)</h3>
-            <table className={styles.table}>
-                <thead>
-                    <tr>
-                        <th className={styles.rankHeader}>Rank</th>
-                        <th className={styles.nameHeader}>Player</th>
-                        <th className={styles.scoreHeader}>Score</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {leaderboard.map((entry, index) => (
-                        <tr key={entry.name} className={styles.row}>
-                            <td className={styles.rank}>
-                                {index === 0 && '🥇'}
-                                {index === 1 && '🥈'}
-                                {index === 2 && '🥉'}
-                                {index > 2 && `${index + 1}`}
-                            </td>
-                            <td className={styles.name}>{entry.name}</td>
-                            <td className={styles.score}>{entry.score}</td>
+            <div
+                className={styles.tableWrapper}
+                role="region"
+                aria-label="Season 7 leaderboard"
+                tabIndex={0}
+            >
+                <table className={styles.table}>
+                    <thead>
+                        <tr>
+                            <th className={styles.rankHeader}>Rank</th>
+                            <th className={styles.nameHeader}>Player</th>
+                            <th className={styles.scoreHeader}>Score</th>
+                            <th className={styles.gapHeader}>Behind leader</th>
+                            <th className={styles.gapHeader}>Behind next</th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {leaderboard.map((entry, index) => {
+                            const pointsBehindLeader = leaderScore - entry.score
+                            const pointsBehindNext =
+                                index === 0 ? 0 : leaderboard[index - 1].score - entry.score
+
+                            return (
+                                <tr key={entry.name} className={styles.row}>
+                                    <td className={styles.rank}>
+                                        {index === 0 && '🥇'}
+                                        {index === 1 && '🥈'}
+                                        {index === 2 && '🥉'}
+                                        {index > 2 && `${index + 1}`}
+                                    </td>
+                                    <td className={styles.name}>{entry.name}</td>
+                                    <td className={styles.score}>{entry.score}</td>
+                                    <td className={styles.gap}>{pointsBehindLeader}</td>
+                                    <td className={styles.gap}>{pointsBehindNext}</td>
+                                </tr>
+                            )
+                        })}
+                    </tbody>
+                </table>
+            </div>
         </div>
     )
 }
