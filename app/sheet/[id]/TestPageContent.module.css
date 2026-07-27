@@ -248,37 +248,6 @@
   font-style: italic;
 }
 
-.instructions {
-  background: var(--card-bg);
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: var(--shadow-sm);
-  transition: all 0.3s ease;
-  margin-top: 2rem;
-}
-
-[data-theme='dark'] .instructions {
-  background: var(--card-bg-dark);
-  box-shadow: var(--shadow-card-dark);
-}
-
-.instructions h3 {
-  margin: 0 0 1rem 0;
-  color: var(--foreground);
-  font-size: 1.25rem;
-}
-
-.instructions ul {
-  margin: 0;
-  padding-left: 1.5rem;
-  color: var(--foreground-muted);
-  line-height: 1.8;
-}
-
-.instructions li {
-  margin-bottom: 0.5rem;
-}
-
 .headerRow {
   display: flex;
   justify-content: space-between;

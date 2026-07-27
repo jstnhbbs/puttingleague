@@ -559,26 +559,6 @@ export default function TestPageContent({ seasonId }: TestPageContentProps) {
                         </div>
                     </div>
                 )}
-
-                <div className={styles.instructions}>
-                    <h3>Instructions:</h3>
-                    <ul>
-                        {isAuthenticated ? (
-                            <>
-                                <li>Click any cell to edit (except calculated rows)</li>
-                                <li>Enter numbers directly (e.g., 123, 45.67)</li>
-                                <li><strong>Total: Automatically sums every week for each column</strong></li>
-                                <li><strong>w/ Drops: Total minus the configured lowest scores in that column</strong></li>
-                            </>
-                        ) : (
-                            <>
-                                <li>This page is in view-only mode</li>
-                                <li>Click "Unlock Editing" to enable editing with admin password</li>
-                                <li>All calculations are still visible and update automatically</li>
-                            </>
-                        )}
-                    </ul>
-                </div>
             </div>
         </main>
     )
