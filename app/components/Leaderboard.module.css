@@ -9,6 +9,11 @@
   transition: all 0.3s ease;
 }
 
+.leaderboardFill {
+  height: 100%;
+  max-width: none;
+}
+
 [data-theme='dark'] .leaderboard {
   background: var(--card-bg-dark);
   box-shadow: var(--shadow-card-dark);

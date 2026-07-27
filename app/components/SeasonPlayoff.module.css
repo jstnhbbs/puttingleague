@@ -15,6 +15,11 @@
   max-width: none;
 }
 
+.wrapperFill {
+  height: 100%;
+  max-width: none;
+}
+
 [data-theme='dark'] .wrapper {
   background: var(--card-bg-dark);
   box-shadow: var(--shadow-card-dark);

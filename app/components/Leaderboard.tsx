@@ -64,7 +64,7 @@ export function Leaderboard({ season, className = '' }: LeaderboardProps) {
     // Always show loading state during SSR to prevent hydration mismatch
     if (!mounted || isLoading) {
         return (
-            <div className={`${styles.leaderboard} ${className}`}>
+            <div className={`${styles.leaderboard} ${className ? styles.leaderboardFill : ''} ${className}`}>
                 <h3 className={styles.title}>{title}</h3>
                 <p className={styles.loading}>Loading...</p>
             </div>
@@ -73,7 +73,7 @@ export function Leaderboard({ season, className = '' }: LeaderboardProps) {
 
     if (!useDatabase) {
         return (
-            <div className={`${styles.leaderboard} ${className}`}>
+            <div className={`${styles.leaderboard} ${className ? styles.leaderboardFill : ''} ${className}`}>
                 <h3 className={styles.title}>{title}</h3>
                 <p className={styles.unavailable}>Database unavailable</p>
             </div>
@@ -83,7 +83,7 @@ export function Leaderboard({ season, className = '' }: LeaderboardProps) {
     const leaderScore = leaderboard[0]?.score ?? 0
 
     return (
-        <div className={`${styles.leaderboard} ${className}`}>
+        <div className={`${styles.leaderboard} ${className ? styles.leaderboardFill : ''} ${className}`}>
             <h3 className={styles.title}>{title}</h3>
             <div
                 className={styles.tableWrapper}

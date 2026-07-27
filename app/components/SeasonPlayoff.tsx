@@ -153,7 +153,7 @@ export function SeasonPlayoff({ season, isAuthenticated, compactLayout = false, 
 
   return (
     <section
-      className={`${styles.wrapper} ${compactLayout ? styles.wrapperCompact : ''} ${className}`}
+      className={`${styles.wrapper} ${compactLayout ? styles.wrapperCompact : ''} ${className ? styles.wrapperFill : ''} ${className}`}
       aria-label="Season playoffs"
     >
       <h2 className={styles.title}>Playoffs</h2>
