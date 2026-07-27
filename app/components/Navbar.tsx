@@ -27,7 +27,8 @@ export function Navbar() {
             href="/gamebreaker"
             className={`${styles.navLink} ${pathname === '/gamebreaker' ? styles.active : ''}`}
           >
-            GameBreaker Cards
+            <span className={styles.fullLabel}>GameBreaker Cards</span>
+            <span className={styles.shortLabel}>Cards</span>
           </Link>
           <Link
             href="/rules"

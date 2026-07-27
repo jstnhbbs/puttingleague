@@ -1,5 +1,8 @@
 .wrapper {
   margin-top: 2rem;
+  width: 100%;
+  max-width: 500px;
+  min-width: 0;
 }
 
 .title {
@@ -13,6 +16,7 @@
   font-size: 0.95rem;
   color: var(--foreground-muted);
   margin: 0 0 1rem 0;
+  line-height: 1.35;
 }
 
 .bracket {
@@ -20,6 +24,7 @@
   border-radius: 12px;
   padding: 1.25rem;
   box-shadow: var(--shadow-sm);
+  min-width: 0;
 }
 
 [data-theme='dark'] .bracket {
@@ -172,8 +177,42 @@
     margin-top: 1.5rem;
   }
 
+  .bracket {
+    padding: 1rem;
+  }
+
   .game {
     grid-template-columns: 1fr;
+    gap: 0.5rem;
+    padding: 0.75rem;
+  }
+
+  .game > .slot:first-child {
+    justify-content: space-between;
+  }
+
+  .slot {
+    justify-content: space-between;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .name {
+    min-width: 0;
+  }
+
+  .scoreInput {
+    flex: 0 0 4.25rem;
+    width: 4.25rem;
   }
 }
 
+@media (max-width: 480px) {
+  .subtitle {
+    font-size: 0.9rem;
+  }
+
+  .title {
+    font-size: 1.35rem;
+  }
+}

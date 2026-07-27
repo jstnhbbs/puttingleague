@@ -40,6 +40,7 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 0.95rem;
+  table-layout: fixed;
 }
 
 .rankHeader,
@@ -120,6 +121,8 @@
 @media (max-width: 768px) {
   .leaderboard {
     padding: 1rem;
+    max-width: 100%;
+    overflow: hidden;
   }
 
   .title {
@@ -128,7 +131,10 @@
 
   .table {
     font-size: 0.85rem;
-    min-width: 440px;
+  }
+
+  .tableWrapper {
+    overflow-x: visible;
   }
 
   .rank,
@@ -147,6 +153,44 @@
 
   .name,
   .nameHeader {
-    min-width: 80px;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  .rankHeader {
+    width: 3rem;
+  }
+
+  .scoreHeader {
+    width: 4.25rem;
+  }
+
+  .gapHeader {
+    width: 5.25rem;
+  }
+
+  .gapHeader:nth-child(5),
+  .gap:nth-child(5) {
+    display: none;
+  }
+
+  .rankHeader,
+  .nameHeader,
+  .scoreHeader,
+  .gapHeader {
+    font-size: 0.76rem;
+    line-height: 1.15;
+  }
+
+  .rank,
+  .name,
+  .score,
+  .gap {
+    padding: 0.45rem 0.35rem;
+  }
+
+  .score {
+    font-size: 1rem;
   }
 }
