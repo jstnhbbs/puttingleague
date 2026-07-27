@@ -3,8 +3,7 @@ import {
   getDb,
   getFallbackSeason,
   getFallbackSeasonPlayers,
-  getSeasonPlayers,
-  getSeasonSummary,
+  getSeasonWithPlayers,
   isTursoConfigured,
 } from '../../../lib/db'
 
@@ -24,11 +23,8 @@ export async function GET(
 
   try {
     const db = getDb()
-    const season = await getSeasonSummary(db, seasonId)
-    return NextResponse.json(
-      season ? { season: { ...season, players: await getSeasonPlayers(db, season.id) } } : { season: null },
-      { status: season ? 200 : 404 }
-    )
+    const season = await getSeasonWithPlayers(db, seasonId)
+    return NextResponse.json(season ? { season } : { season: null }, { status: season ? 200 : 404 })
   } catch (error) {
     console.error('GET /api/seasons/[seasonId] error:', error)
     const season = getFallbackSeason(seasonId)

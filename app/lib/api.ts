@@ -1,7 +1,5 @@
-// API configuration
-// When empty, uses same-origin (e.g. Vercel: /api/*). Set for external API (Express + tunnel).
-// e.g. NEXT_PUBLIC_API_URL=http://localhost:3001 or https://your-tunnel.trycloudflare.com
-export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? ''
+// API routes are served by the same Next.js/Vercel app.
+export const API_URL = ''
 
 export interface Cell {
     value: string
@@ -265,10 +263,6 @@ export async function saveCells(cells: Record<string, Cell>, seasonId: string = 
             const text = await response.text()
             console.error('Response is not JSON. Content-Type:', contentType)
             console.error('Response body:', text.substring(0, 500))
-            // Check if it's ngrok interstitial page
-            if (text.includes('ngrok') || text.includes('Visit Site')) {
-                console.error('⚠️ ngrok interstitial page detected! You may need to visit the ngrok URL in a browser first to bypass it.')
-            }
             return false
         }
 
@@ -315,7 +309,7 @@ export async function checkHealth(): Promise<boolean> {
         if (error instanceof Error && error.name === 'AbortError') {
             console.warn('Health check timed out after 5 seconds')
         } else if (error instanceof TypeError && (error.message.includes('fetch') || error.message.includes('NetworkError'))) {
-            console.warn('Health check: API server unreachable. Check that the server is running and NEXT_PUBLIC_API_URL is correct:', API_URL)
+            console.warn('Health check: API server unreachable.')
         } else {
             console.warn('Health check error:', error instanceof Error ? error.message : error)
         }

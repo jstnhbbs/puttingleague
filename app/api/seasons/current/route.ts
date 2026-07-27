@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server'
 import {
-  getCurrentSeason,
   getFallbackSeasonPlayers,
   getFallbackSeasons,
   getDb,
-  getSeasonPlayers,
+  getSeasonsWithPlayers,
   isTursoConfigured,
 } from '../../../lib/db'
 
@@ -20,10 +19,8 @@ export async function GET() {
 
   try {
     const db = getDb()
-    const season = await getCurrentSeason(db)
-    return NextResponse.json(
-      season ? { season: { ...season, players: await getSeasonPlayers(db, season.id) } } : { season: null }
-    )
+    const season = (await getSeasonsWithPlayers(db)).find((item) => item.status === 'current') ?? null
+    return NextResponse.json({ season })
   } catch (error) {
     console.error('GET /api/seasons/current error:', error)
     const season = getFallbackSeasons().find((item) => item.status === 'current') ?? null

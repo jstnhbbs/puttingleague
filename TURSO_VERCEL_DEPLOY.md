@@ -6,7 +6,7 @@ This guide covers moving from a local Node/Express + SQLite setup to **Turso** (
 
 | Before | After |
 |--------|--------|
-| Next.js (static export) on GitHub Pages | Next.js on **Vercel** |
+| Next.js static export | Next.js on **Vercel** |
 | Express server on Mac mini + Cloudflare tunnel | **Next.js API routes** on Vercel (same app) |
 | SQLite file (`better-sqlite3`) | **Turso** (libSQL, hosted SQLite) |
 
@@ -65,7 +65,7 @@ After this, the Turso DB has the same structure as your current SQLite DB (playe
   - `app/api/cells/batch/route.ts` – POST (save many cells + recalc totals).
   - `app/api/cells/[cellKey]/route.ts` – DELETE one cell.
 
-- **Frontend**: `app/lib/api.ts` uses `NEXT_PUBLIC_API_URL` when set; if unset (or when deployed to Vercel), it uses relative `/api`, so the same app works locally and on Vercel.
+- **Frontend**: `app/lib/api.ts` uses relative `/api` routes served by the same Next.js app.
 
 ## 4. Vercel deployment
 
@@ -73,7 +73,7 @@ After this, the Turso DB has the same structure as your current SQLite DB (playe
 2. **Environment variables** (Project → Settings → Environment Variables):
    - `TURSO_DATABASE_URL` = your Turso URL  
    - `TURSO_AUTH_TOKEN` = your Turso token  
-   (No `NEXT_PUBLIC_API_URL` needed for production; the app uses `/api`.)
+   Do not set `NEXT_PUBLIC_API_URL`; the app uses same-origin `/api` routes on Vercel.
 3. **Build**: Use default (e.g. `npm run build`). Do **not** use static export for this deployment (see below).
 4. **Deploy**: Push to main (or your production branch); Vercel builds and deploys.
 

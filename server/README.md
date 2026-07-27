@@ -40,18 +40,6 @@ The SQLite database is stored in `server/data/puttingleague.db`. This file is cr
 - `DELETE /api/cells/:cellKey` - Delete a cell
 - `GET /api/health` - Health check
 
-## Making it accessible from GitHub Pages
-
-1. **Update CORS settings** in `server.js` - Replace `yourusername.github.io` with your actual GitHub Pages URL
-
-2. **Expose your Mac mini to the internet** (choose one):
-   - Use a service like ngrok: `ngrok http 3001`
-   - Set up port forwarding on your router
-   - Use a dynamic DNS service
-   - Deploy to a cloud service (Heroku, Railway, Render, etc.)
-
-3. **Update the API URL** in your Next.js app to point to your server
-
 ## Running as a service (macOS)
 
 To run the server automatically on startup:

@@ -3,7 +3,6 @@ import { Roboto } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider } from './components/ThemeProvider'
 import { Navbar } from './components/Navbar'
-import { CSPFix } from './components/CSPFix'
 import { GoogleAnalytics } from './components/GoogleAnalytics'
 
 const roboto = Roboto({
@@ -32,7 +31,6 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={roboto.className} suppressHydrationWarning>
         <GoogleAnalytics />
-        <CSPFix />
         <ThemeProvider>
           <Navbar />
           {children}

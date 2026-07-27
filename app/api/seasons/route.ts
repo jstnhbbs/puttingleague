@@ -3,8 +3,7 @@ import {
   getDb,
   getFallbackSeasonPlayers,
   getFallbackSeasons,
-  getSeasonPlayers,
-  getSeasonSummaries,
+  getSeasonsWithPlayers,
   isTursoConfigured,
 } from '../../lib/db'
 
@@ -22,15 +21,7 @@ export async function GET() {
 
   try {
     const db = getDb()
-    const seasons = await getSeasonSummaries(db)
-    const seasonsWithPlayers = await Promise.all(
-      seasons.map(async (season) => ({
-        ...season,
-        players: await getSeasonPlayers(db, season.id),
-      }))
-    )
-
-    return NextResponse.json({ seasons: seasonsWithPlayers })
+    return NextResponse.json({ seasons: await getSeasonsWithPlayers(db) })
   } catch (error) {
     console.error('GET /api/seasons error:', error)
     return NextResponse.json({

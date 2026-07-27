@@ -31,6 +31,10 @@ export interface SeasonPlayer {
   displayOrder: number
 }
 
+export interface SeasonWithPlayers extends SeasonSummary {
+  players: SeasonPlayer[]
+}
+
 type SeedSeason = {
   season_id: string
   title: string
@@ -157,6 +161,8 @@ export const SEASON_SEEDS: readonly SeedSeason[] = [
 
 let client: Client | null = null
 let schemaReady = false
+let catalogReady = false
+let catalogPromise: Promise<void> | null = null
 
 export function getDb(): Client {
   if (!client) {
@@ -232,7 +238,25 @@ export function getCurrentSeasonId(): string {
  * Safe to call on each API request.
  */
 export async function ensureSeasonCatalog(db: ReturnType<typeof getDb>): Promise<void> {
+  if (catalogReady) return
+  if (catalogPromise) return catalogPromise
+
+  catalogPromise = syncSeasonCatalog(db)
+    .then(() => {
+      catalogReady = true
+    })
+    .catch((error) => {
+      catalogPromise = null
+      throw error
+    })
+
+  return catalogPromise
+}
+
+async function syncSeasonCatalog(db: ReturnType<typeof getDb>): Promise<void> {
   await ensureSeasonSchema(db)
+
+  if (await isSeasonCatalogCurrent(db)) return
 
   for (let displayOrder = 0; displayOrder < PLAYER_CATALOG.length; displayOrder++) {
     const playerName = PLAYER_CATALOG[displayOrder]
@@ -285,6 +309,32 @@ export async function ensureSeasonCatalog(db: ReturnType<typeof getDb>): Promise
 
     await ensureSeasonPlayerRelationships(db, season.season_id, season.players)
   }
+}
+
+async function isSeasonCatalogCurrent(db: ReturnType<typeof getDb>): Promise<boolean> {
+  const result = await db.execute(
+    `SELECT
+       (SELECT COUNT(*) FROM players WHERE name IN ('Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Brad', 'Tyler', 'Graham')) AS player_count,
+       (SELECT COUNT(*) FROM seasons WHERE season_id IN ('season1', 'season2', 'season3', 'season4', 'season5', 'season6', 'season7', 'season8')) AS season_count,
+       (SELECT COUNT(*) FROM seasons WHERE season_id = 'season8' AND status = 'current' AND playoff_format = 'eight_player' AND weeks_count = 10 AND drop_lowest_count = 2) AS current_count,
+       (SELECT COUNT(*)
+        FROM seasons s
+        JOIN players p ON p.id = s.champion_player_id
+        WHERE s.season_id = 'season7' AND p.name = 'Hunter') AS season7_champion_count,
+       (SELECT COUNT(*)
+        FROM season_players sp
+        JOIN seasons s ON s.id = sp.season_id
+        WHERE s.season_id = 'season8') AS season8_player_count`
+  )
+  const row = (result.rows as DbRow[])[0]
+
+  return (
+    Number(row?.player_count ?? 0) === PLAYER_CATALOG.length &&
+    Number(row?.season_count ?? 0) === SEASON_SEEDS.length &&
+    Number(row?.current_count ?? 0) === 1 &&
+    Number(row?.season7_champion_count ?? 0) === 1 &&
+    Number(row?.season8_player_count ?? 0) === ROSTERS.eightPlayer.length
+  )
 }
 
 export async function ensureSeasonPlayerRelationships(
@@ -353,6 +403,23 @@ export async function getSeasonSummaries(db: ReturnType<typeof getDb>): Promise<
   return (result.rows as DbRow[]).map(rowToSeasonSummary)
 }
 
+export async function getSeasonsWithPlayers(db: ReturnType<typeof getDb>): Promise<SeasonWithPlayers[]> {
+  await ensureSeasonCatalog(db)
+
+  const result = await db.execute(
+    `SELECT s.season_id, s.title, s.description, s.status, s.sheet_url, s.playoff_format,
+            s.weeks_count, s.drop_lowest_count, champion.name AS champion,
+            p.id AS player_id, p.name AS player_name, sp.display_order AS player_display_order
+     FROM seasons s
+     LEFT JOIN players champion ON champion.id = s.champion_player_id
+     LEFT JOIN season_players sp ON sp.season_id = s.id
+     LEFT JOIN players p ON p.id = sp.player_id
+     ORDER BY CAST(REPLACE(s.season_id, 'season', '') AS INTEGER), sp.display_order`
+  )
+
+  return rowsToSeasonsWithPlayers(result.rows as DbRow[])
+}
+
 export async function getSeasonSummary(
   db: ReturnType<typeof getDb>,
   seasonId: string
@@ -369,6 +436,28 @@ export async function getSeasonSummary(
   )
   const row = (result.rows as DbRow[])[0]
   return row ? rowToSeasonSummary(row) : null
+}
+
+export async function getSeasonWithPlayers(
+  db: ReturnType<typeof getDb>,
+  seasonId: string
+): Promise<SeasonWithPlayers | null> {
+  await ensureSeasonCatalog(db)
+
+  const result = await db.execute(
+    `SELECT s.season_id, s.title, s.description, s.status, s.sheet_url, s.playoff_format,
+            s.weeks_count, s.drop_lowest_count, champion.name AS champion,
+            p.id AS player_id, p.name AS player_name, sp.display_order AS player_display_order
+     FROM seasons s
+     LEFT JOIN players champion ON champion.id = s.champion_player_id
+     LEFT JOIN season_players sp ON sp.season_id = s.id
+     LEFT JOIN players p ON p.id = sp.player_id
+     WHERE s.season_id = ?
+     ORDER BY sp.display_order`,
+    [seasonId]
+  )
+
+  return rowsToSeasonsWithPlayers(result.rows as DbRow[])[0] ?? null
 }
 
 export async function getCurrentSeason(db: ReturnType<typeof getDb>): Promise<SeasonSummary | null> {
@@ -399,6 +488,27 @@ function rowToSeasonSummary(row: DbRow): SeasonSummary {
     dropLowestCount: Number(row.drop_lowest_count ?? 2),
     champion: row.champion != null ? String(row.champion) : null,
   }
+}
+
+function rowsToSeasonsWithPlayers(rows: DbRow[]): SeasonWithPlayers[] {
+  const seasons = new Map<string, SeasonWithPlayers>()
+
+  for (const row of rows) {
+    const summary = rowToSeasonSummary(row)
+    const existing = seasons.get(summary.id)
+    const season = existing ?? { ...summary, players: [] }
+    if (!existing) seasons.set(summary.id, season)
+
+    if (row.player_id != null && row.player_name != null) {
+      season.players.push({
+        id: Number(row.player_id),
+        name: String(row.player_name),
+        displayOrder: Number(row.player_display_order ?? season.players.length),
+      })
+    }
+  }
+
+  return Array.from(seasons.values())
 }
 
 export type CellKeyRelational = {

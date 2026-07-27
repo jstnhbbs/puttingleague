@@ -5,7 +5,7 @@ import Link from 'next/link'
 import styles from './page.module.css'
 import { Leaderboard } from './components/Leaderboard'
 import { SeasonPlayoff } from './components/SeasonPlayoff'
-import { fetchCurrentSeason, fetchSeasons, type SeasonSummary } from './lib/api'
+import { fetchSeasons, type SeasonSummary } from './lib/api'
 
 export default function Home() {
     const [seasons, setSeasons] = useState<SeasonSummary[]>([])
@@ -14,10 +14,10 @@ export default function Home() {
     useEffect(() => {
         let isMounted = true
 
-        Promise.all([fetchSeasons(), fetchCurrentSeason()]).then(([allSeasons, activeSeason]) => {
+        fetchSeasons().then((allSeasons) => {
             if (!isMounted) return
             setSeasons([...allSeasons].reverse())
-            setCurrentSeason(activeSeason)
+            setCurrentSeason(allSeasons.find((season) => season.status === 'current') ?? null)
         })
 
         return () => {

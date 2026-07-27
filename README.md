@@ -43,16 +43,9 @@ ADMIN_SESSION_SECRET="a long random string used to sign admin sessions"
 
 `NEXTAUTH_SECRET` can be used as the signing secret if `ADMIN_SESSION_SECRET` is not set. Admin sessions expire after 12 hours.
 
-### Adding Google Sheets
+### Seasons
 
-1. Open `app/page.tsx` and update the `sheets` array with your sheet information
-2. For each sheet, you need:
-   - `id`: A unique identifier (used in the URL)
-   - `title`: Display name for the card
-   - `description`: Card description
-   - `sheetUrl`: Your Google Sheet sharing URL
-
-3. Also update the `sheets` object in `app/sheet/[id]/page.tsx` with the same data
+Seasons, players, display order, playoff format, and scoring settings are backed by the database through the `/api/seasons` routes. Update the season catalog seed in `app/lib/db.ts` when bootstrapping a new season, then deploy to Vercel so Turso is synchronized by the API.
 
 ### Google Sheets Setup
 

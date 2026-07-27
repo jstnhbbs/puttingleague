@@ -7,12 +7,10 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Enable CORS for your GitHub Pages domain and ngrok
+// Enable CORS for local development and temporary external tunnels.
 app.use(cors({
     origin: [
         'http://localhost:3000',
-        'https://jstnhbbs.github.io', // Your GitHub Pages URL
-        /\.github\.io$/, // Allow any GitHub Pages subdomain
         /\.ngrok-free\.app$/, // Allow any ngrok free tier URL
         /\.ngrok\.io$/, // Allow any ngrok paid tier URL
         /\.ngrok-app\.dev$/, // Allow ngrok app dev URLs
