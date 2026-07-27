@@ -50,6 +50,11 @@
   width: 100%;
 }
 
+.dashboardPanel > * {
+  max-width: none;
+  width: 100%;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

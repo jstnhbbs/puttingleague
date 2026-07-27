@@ -1,26 +1,34 @@
 .wrapper {
-  margin-top: 2rem;
+  margin-top: 0;
   width: 100%;
   max-width: 500px;
   min-width: 0;
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
 }
 
 .wrapperCompact {
+  margin-top: 2rem;
   max-width: none;
+}
+
+[data-theme='dark'] .wrapper {
+  background: var(--card-bg-dark);
+  box-shadow: var(--shadow-card-dark);
 }
 
 .title {
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--foreground);
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 1rem 0;
+  text-align: center;
 }
 
 .bracket {
-  background: var(--card-bg);
-  border-radius: 12px;
-  padding: 1.25rem;
-  box-shadow: var(--shadow-sm);
   min-width: 0;
 }
 
@@ -29,11 +37,6 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: start;
   gap: 1.25rem;
-}
-
-[data-theme='dark'] .bracket {
-  background: var(--card-bg-dark);
-  box-shadow: var(--shadow-card-dark);
 }
 
 .round {
@@ -182,15 +185,13 @@
 
 @media (max-width: 768px) {
   .wrapper {
-    margin-top: 1.5rem;
+    padding: 1rem;
+    max-width: 100%;
   }
 
   .wrapperCompact {
+    margin-top: 1.5rem;
     max-width: 500px;
-  }
-
-  .bracket {
-    padding: 1rem;
   }
 
   .bracketCompact {
