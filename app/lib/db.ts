@@ -35,6 +35,28 @@ export interface SeasonWithPlayers extends SeasonSummary {
   players: SeasonPlayer[]
 }
 
+export interface PlayerSummary {
+  id: number
+  name: string
+  displayOrder: number
+}
+
+export type EditableSeasonInput = {
+  id: string
+  title: string
+  description: string
+  sheetUrl: string
+  status: SeasonStatus
+  playoffFormat: PlayoffFormat
+  weeksCount: number
+  dropLowestCount: number
+  champion: string | null
+  players: Array<{
+    name: string
+    displayOrder: number
+  }>
+}
+
 type SeedSeason = {
   season_id: string
   title: string
@@ -289,23 +311,6 @@ async function syncSeasonCatalog(db: ReturnType<typeof getDb>): Promise<void> {
         season.drop_lowest_count,
       ]
     )
-    await db.execute(
-      `UPDATE seasons
-       SET title = ?, description = ?, status = ?, champion_player_id = ?, sheet_url = ?,
-           playoff_format = ?, weeks_count = ?, drop_lowest_count = ?
-       WHERE season_id = ?`,
-      [
-        season.title,
-        season.description,
-        season.status,
-        championId,
-        season.sheet_url,
-        season.playoff_format,
-        season.weeks_count,
-        season.drop_lowest_count,
-        season.season_id,
-      ]
-    )
 
     await ensureSeasonPlayerRelationships(db, season.season_id, season.players)
   }
@@ -315,25 +320,13 @@ async function isSeasonCatalogCurrent(db: ReturnType<typeof getDb>): Promise<boo
   const result = await db.execute(
     `SELECT
        (SELECT COUNT(*) FROM players WHERE name IN ('Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Brad', 'Tyler', 'Graham')) AS player_count,
-       (SELECT COUNT(*) FROM seasons WHERE season_id IN ('season1', 'season2', 'season3', 'season4', 'season5', 'season6', 'season7', 'season8')) AS season_count,
-       (SELECT COUNT(*) FROM seasons WHERE season_id = 'season8' AND status = 'current' AND playoff_format = 'eight_player' AND weeks_count = 10 AND drop_lowest_count = 2) AS current_count,
-       (SELECT COUNT(*)
-        FROM seasons s
-        JOIN players p ON p.id = s.champion_player_id
-        WHERE s.season_id = 'season7' AND p.name = 'Hunter') AS season7_champion_count,
-       (SELECT COUNT(*)
-        FROM season_players sp
-        JOIN seasons s ON s.id = sp.season_id
-        WHERE s.season_id = 'season8') AS season8_player_count`
+       (SELECT COUNT(*) FROM seasons WHERE season_id IN ('season1', 'season2', 'season3', 'season4', 'season5', 'season6', 'season7', 'season8')) AS season_count`
   )
   const row = (result.rows as DbRow[])[0]
 
   return (
     Number(row?.player_count ?? 0) === PLAYER_CATALOG.length &&
-    Number(row?.season_count ?? 0) === SEASON_SEEDS.length &&
-    Number(row?.current_count ?? 0) === 1 &&
-    Number(row?.season7_champion_count ?? 0) === 1 &&
-    Number(row?.season8_player_count ?? 0) === ROSTERS.eightPlayer.length
+    Number(row?.season_count ?? 0) === SEASON_SEEDS.length
   )
 }
 
@@ -474,6 +467,151 @@ export async function getCurrentSeason(db: ReturnType<typeof getDb>): Promise<Se
   )
   const row = (result.rows as DbRow[])[0]
   return row ? rowToSeasonSummary(row) : null
+}
+
+export async function getPlayers(db: ReturnType<typeof getDb>): Promise<PlayerSummary[]> {
+  await ensureSeasonCatalog(db)
+
+  const result = await db.execute('SELECT id, name, display_order FROM players ORDER BY display_order, name')
+  return (result.rows as DbRow[]).map((row) => ({
+    id: Number(row.id),
+    name: String(row.name ?? ''),
+    displayOrder: Number(row.display_order ?? 0),
+  }))
+}
+
+export async function saveEditableSeason(
+  db: ReturnType<typeof getDb>,
+  currentSeasonId: string,
+  input: EditableSeasonInput
+): Promise<SeasonWithPlayers> {
+  await ensureSeasonCatalog(db)
+
+  const seasonIdChanged = currentSeasonId !== input.id
+  if (seasonIdChanged) {
+    const existing = await db.execute('SELECT id FROM seasons WHERE season_id = ?', [input.id])
+    if (existing.rows.length > 0) {
+      throw new Error(`Season ${input.id} already exists`)
+    }
+  }
+
+  if (input.status === 'current') {
+    await db.execute("UPDATE seasons SET status = 'completed' WHERE season_id <> ?", [currentSeasonId])
+  }
+
+  const championId = input.champion ? await getOrCreatePlayerId(db, input.champion) : null
+  await db.execute(
+    `UPDATE seasons
+     SET season_id = ?, title = ?, description = ?, status = ?, champion_player_id = ?, sheet_url = ?,
+         playoff_format = ?, weeks_count = ?, drop_lowest_count = ?
+     WHERE season_id = ?`,
+    [
+      input.id,
+      input.title,
+      input.description,
+      input.status,
+      championId,
+      input.sheetUrl,
+      input.playoffFormat,
+      input.weeksCount,
+      input.dropLowestCount,
+      currentSeasonId,
+    ]
+  )
+
+  const seasonResult = await db.execute('SELECT id FROM seasons WHERE season_id = ?', [input.id])
+  const seasonRow = (seasonResult.rows as DbRow[])[0]
+  if (!seasonRow) throw new Error(`Season ${input.id} was not found`)
+  const seasonDbId = Number(seasonRow.id)
+
+  await db.execute('DELETE FROM season_players WHERE season_id = ?', [seasonDbId])
+  for (const player of input.players) {
+    const playerId = await getOrCreatePlayerId(db, player.name)
+    await db.execute(
+      `INSERT INTO season_players (season_id, player_id, display_order)
+       VALUES (?, ?, ?)
+       ON CONFLICT(season_id, player_id) DO UPDATE SET display_order = excluded.display_order`,
+      [seasonDbId, playerId, player.displayOrder]
+    )
+  }
+
+  const season = await getSeasonWithPlayers(db, input.id)
+  if (!season) throw new Error(`Season ${input.id} could not be loaded`)
+  return season
+}
+
+export async function duplicateSeason(
+  db: ReturnType<typeof getDb>,
+  sourceSeasonId: string,
+  targetSeasonNumber?: number
+): Promise<SeasonWithPlayers> {
+  await ensureSeasonCatalog(db)
+
+  const source = await getSeasonWithPlayers(db, sourceSeasonId)
+  if (!source) throw new Error(`Season ${sourceSeasonId} was not found`)
+
+  const nextNumber = targetSeasonNumber ?? (await getNextSeasonNumber(db))
+  const targetSeasonId = `season${nextNumber}`
+  const existing = await db.execute('SELECT id FROM seasons WHERE season_id = ?', [targetSeasonId])
+  if (existing.rows.length > 0) throw new Error(`Season ${nextNumber} already exists`)
+
+  await db.execute("UPDATE seasons SET status = 'completed'")
+  await db.execute(
+    `INSERT INTO seasons
+     (season_id, title, description, status, champion_player_id, sheet_url, playoff_format, weeks_count, drop_lowest_count)
+     VALUES (?, ?, ?, 'current', NULL, ?, ?, ?, ?)`,
+    [
+      targetSeasonId,
+      `Season ${nextNumber}`,
+      'Current season',
+      source.sheetUrl,
+      source.playoffFormat,
+      source.weeksCount,
+      source.dropLowestCount,
+    ]
+  )
+
+  const seasonResult = await db.execute('SELECT id FROM seasons WHERE season_id = ?', [targetSeasonId])
+  const seasonDbId = Number((seasonResult.rows as DbRow[])[0]?.id)
+  for (const player of source.players) {
+    await db.execute(
+      `INSERT INTO season_players (season_id, player_id, display_order)
+       VALUES (?, ?, ?)`,
+      [seasonDbId, player.id, player.displayOrder]
+    )
+  }
+
+  const season = await getSeasonWithPlayers(db, targetSeasonId)
+  if (!season) throw new Error(`Season ${targetSeasonId} could not be loaded`)
+  return season
+}
+
+async function getNextSeasonNumber(db: ReturnType<typeof getDb>): Promise<number> {
+  const result = await db.execute(
+    `SELECT MAX(CAST(REPLACE(season_id, 'season', '') AS INTEGER)) AS max_season_number
+     FROM seasons
+     WHERE season_id GLOB 'season[0-9]*'`
+  )
+  const row = (result.rows as DbRow[])[0]
+  return Number(row?.max_season_number ?? 0) + 1
+}
+
+async function getOrCreatePlayerId(db: ReturnType<typeof getDb>, playerName: string): Promise<number> {
+  const trimmedName = playerName.trim()
+  if (!trimmedName) throw new Error('Player name is required')
+
+  const existing = await db.execute('SELECT id FROM players WHERE lower(name) = lower(?)', [trimmedName])
+  const existingRow = (existing.rows as DbRow[])[0]
+  if (existingRow) return Number(existingRow.id)
+
+  const orderResult = await db.execute('SELECT COALESCE(MAX(display_order), -1) + 1 AS next_order FROM players')
+  const nextOrder = Number((orderResult.rows as DbRow[])[0]?.next_order ?? 0)
+  await db.execute('INSERT INTO players (name, display_order) VALUES (?, ?)', [trimmedName, nextOrder])
+
+  const created = await db.execute('SELECT id FROM players WHERE lower(name) = lower(?)', [trimmedName])
+  const createdRow = (created.rows as DbRow[])[0]
+  if (!createdRow) throw new Error(`Player ${trimmedName} could not be created`)
+  return Number(createdRow.id)
 }
 
 function rowToSeasonSummary(row: DbRow): SeasonSummary {
