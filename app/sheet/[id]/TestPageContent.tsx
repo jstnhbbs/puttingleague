@@ -515,7 +515,7 @@ export default function TestPageContent({ seasonId }: TestPageContentProps) {
                     </table>
                 </div>
 
-                {season && <SeasonPlayoff season={season} isAuthenticated={isAuthenticated} />}
+                {season && <SeasonPlayoff season={season} isAuthenticated={isAuthenticated} compactLayout />}
 
                 {/* Password prompt modal overlay */}
                 {showPasswordPrompt && !isAuthenticated && (

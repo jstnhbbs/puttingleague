@@ -36,9 +36,10 @@ function getWinner(score1: string, score2: string, name1: string, name2: string)
 interface SeasonPlayoffProps {
   season: SeasonSummary
   isAuthenticated: boolean
+  compactLayout?: boolean
 }
 
-export function SeasonPlayoff({ season, isAuthenticated }: SeasonPlayoffProps) {
+export function SeasonPlayoff({ season, isAuthenticated, compactLayout = false }: SeasonPlayoffProps) {
   const seasonId = season.id
   const isEarly = season.playoffFormat === 'six_player'
   const isSeason5 = season.playoffFormat === 'seven_player'
@@ -150,31 +151,11 @@ export function SeasonPlayoff({ season, isAuthenticated }: SeasonPlayoffProps) {
   )
 
   return (
-    <section className={styles.wrapper} aria-label="Season playoffs">
+    <section
+      className={`${styles.wrapper} ${compactLayout ? styles.wrapperCompact : ''}`}
+      aria-label="Season playoffs"
+    >
       <h2 className={styles.title}>Playoffs</h2>
-      {isEarly && (
-        <p className={styles.subtitle}>
-          Round 1: 1 vs 4 and 2 vs 3 <br />
-          Round 2: Winner of 1 vs 4 vs Winner of 2 vs 3 <br />
-          Championship: Winner of Round 2.
-        </p>
-      )}
-      {isSeason5 && (
-        <p className={styles.subtitle}>
-          Play In: 6 vs 7 <br />
-          Round 1: 3 vs play‑in winner and 4 vs 5 <br />
-          Round 2: 1 vs lower‑seeded winner and 2 vs higher‑seeded winner <br />
-          Championship: Finals between Round‑2 winners.
-        </p>
-      )}
-      {isEightPlayer && (
-        <p className={styles.subtitle}>
-          Round 1: 5 vs 8 and 6 vs 7 <br />
-          Round 2: 3 vs lower‑seeded R1 winner, 4 vs higher‑seeded R1 winner. <br />
-          Round 3: 1 vs lower‑seeded R2 winner, 2 vs higher‑seeded R2 winner. <br />
-          Championship: R3 winners.
-        </p>
-      )}
 
       {!useDatabase && (
         <p className={styles.unavailable}>Database unavailable. Connect to load playoff data.</p>
@@ -184,7 +165,7 @@ export function SeasonPlayoff({ season, isAuthenticated }: SeasonPlayoffProps) {
 
       {/* Early seasons (1–4): 6‑player bracket */}
       {!isLoading && useDatabase && leaderboard.length > 0 && isEarly && (
-        <div className={styles.bracket}>
+        <div className={`${styles.bracket} ${compactLayout ? styles.bracketCompact : ''}`}>
           {/* Round 1: Semifinals + Last place */}
           <div className={styles.round}>
             <h3 className={styles.roundTitle}>Round 1</h3>
@@ -353,7 +334,7 @@ export function SeasonPlayoff({ season, isAuthenticated }: SeasonPlayoffProps) {
 
       {/* Season 5: 7‑player bracket with play‑in */}
       {!isLoading && useDatabase && leaderboard.length > 0 && isSeason5 && (
-        <div className={styles.bracket}>
+        <div className={`${styles.bracket} ${compactLayout ? styles.bracketCompact : ''}`}>
           {/* Play‑In: 6 vs 7 */}
           <div className={styles.round}>
             <h3 className={styles.roundTitle}>Play‑In</h3>
@@ -724,7 +705,7 @@ export function SeasonPlayoff({ season, isAuthenticated }: SeasonPlayoffProps) {
         )
 
         return (
-          <div className={styles.bracket}>
+          <div className={`${styles.bracket} ${compactLayout ? styles.bracketCompact : ''}`}>
             <div className={styles.round}>
               <h3 className={styles.roundTitle}>Round 1</h3>
               <div className={styles.games}>
