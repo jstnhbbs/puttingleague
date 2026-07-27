@@ -159,20 +159,15 @@
 
 @media (max-width: 560px) {
   .rankHeader {
-    width: 3rem;
+    width: 2.75rem;
   }
 
   .scoreHeader {
-    width: 4.25rem;
+    width: 3.75rem;
   }
 
   .gapHeader {
-    width: 5.25rem;
-  }
-
-  .gapHeader:nth-child(5),
-  .gap:nth-child(5) {
-    display: none;
+    width: 4.25rem;
   }
 
   .rankHeader,
@@ -187,7 +182,7 @@
   .name,
   .score,
   .gap {
-    padding: 0.45rem 0.35rem;
+    padding: 0.45rem 0.25rem;
   }
 
   .score {
