@@ -2,43 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import {
   getDb,
   isTursoConfigured,
-  getPlayerListForSeason,
   cellKeyToRelational,
   ensureSeasonCatalog,
+  getSeasonSummary,
+  CURRENT_SEASON_ID,
   type DbRow,
 } from '../../../lib/db'
 import { isAdminRequest, unauthorizedResponse } from '../../../lib/adminSession'
-
-function ensureSeasonPlayerRelationships(
-  db: ReturnType<typeof getDb>,
-  seasonId: string
-): Promise<void> {
-  const playerList = [...getPlayerListForSeason(seasonId)]
-
-  return db.execute('SELECT id FROM seasons WHERE season_id = ?', [seasonId]).then((r) => {
-    const seasonRow = (r.rows as DbRow[])[0]
-    if (!seasonRow) return
-    const seasonDbId = seasonRow.id as number
-    return Promise.all(
-      playerList.map(async (playerName, colIndex) => {
-        const pr = await db.execute('SELECT id FROM players WHERE name = ?', [playerName])
-        const playerRow = (pr.rows as DbRow[])[0]
-        if (!playerRow) return
-        const playerId = playerRow.id as number
-        const ex = await db.execute(
-          'SELECT id FROM season_players WHERE season_id = ? AND player_id = ?',
-          [seasonDbId, playerId]
-        )
-        if ((ex.rows as DbRow[]).length === 0) {
-          await db.execute(
-            'INSERT OR IGNORE INTO season_players (season_id, player_id, display_order) VALUES (?, ?, ?)',
-            [seasonDbId, playerId, colIndex]
-          )
-        }
-      })
-    ).then(() => {})
-  })
-}
 
 export async function POST(request: NextRequest) {
   if (!isAdminRequest(request)) {
@@ -50,7 +20,7 @@ export async function POST(request: NextRequest) {
   }
   try {
     const body = await request.json()
-    const seasonId = (body.seasonId as string) || 'season7'
+    const seasonId = (body.seasonId as string) || CURRENT_SEASON_ID
     const cells = body.cells as Record<string, { value?: string; isFormula?: boolean }> | undefined
     if (!cells || typeof cells !== 'object') {
       return NextResponse.json({ error: 'cells object is required' }, { status: 400 })
@@ -64,13 +34,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: `Invalid season: ${seasonId}` }, { status: 400 })
     }
     const seasonDbId = seasonRow.id as number
-
-    await ensureSeasonPlayerRelationships(db, seasonId)
+    const season = await getSeasonSummary(db, seasonId)
+    const dropLowestCount = season?.dropLowestCount ?? 2
 
     const playersToRecalculate = new Set<number>()
 
     for (const [cellKey, cell] of Object.entries(cells)) {
-      const rel = cellKeyToRelational(cellKey, seasonId)
+      const rel = await cellKeyToRelational(db, cellKey, seasonId)
       if (!rel) continue
 
       const pr = await db.execute('SELECT id FROM players WHERE name = ?', [rel.playerName])
@@ -132,18 +102,18 @@ export async function POST(request: NextRequest) {
          VALUES (?, ?, 'total', ?, datetime('now'))`,
         [seasonDbId, playerId, total]
       )
-      const totalMinusTwo =
-        scores.length >= 2
+      const totalMinusDrops =
+        scores.length > dropLowestCount
           ? total -
             [...scores]
               .sort((a, b) => a - b)
-              .slice(0, 2)
+              .slice(0, dropLowestCount)
               .reduce((s, x) => s + x, 0)
           : total
       await db.execute(
         `INSERT OR REPLACE INTO calculated_scores (season_id, player_id, calculation_type, value, calculated_at)
          VALUES (?, ?, 'total_minus_two_lowest', ?, datetime('now'))`,
-        [seasonDbId, playerId, totalMinusTwo]
+        [seasonDbId, playerId, totalMinusDrops]
       )
     }
 

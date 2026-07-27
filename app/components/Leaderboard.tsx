@@ -1,20 +1,30 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { fetchCells, checkHealth } from '../lib/api'
-import { EIGHT_PLAYER_COLUMNS } from '../lib/seasons'
+import { fetchCells, checkHealth, type SeasonSummary } from '../lib/api'
 import { getLeaderboardFromCells } from '../lib/playoffUtils'
 import type { LeaderboardEntry } from '../lib/playoffUtils'
 import styles from './Leaderboard.module.css'
 
-export function Leaderboard() {
+interface LeaderboardProps {
+    season: SeasonSummary | null
+}
+
+export function Leaderboard({ season }: LeaderboardProps) {
     const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [useDatabase, setUseDatabase] = useState(false)
     const [mounted, setMounted] = useState(false)
+    const title = season ? `${season.title} leaderboard (w/ drops)` : 'Leaderboard (w/ drops)'
 
     useEffect(() => {
         setMounted(true)
+
+        if (!season) {
+            setIsLoading(false)
+            setLeaderboard([])
+            return
+        }
 
         const loadLeaderboard = async () => {
             try {
@@ -25,9 +35,11 @@ export function Leaderboard() {
 
                 if (dbAvailable) {
                     try {
-                        const cells = await fetchCells('season7')
-                        const entries = getLeaderboardFromCells(cells, [...EIGHT_PLAYER_COLUMNS], {
+                        const cells = await fetchCells(season.id)
+                        const entries = getLeaderboardFromCells(cells, season.players.map((player) => player.name), {
                             calculation: 'total_minus_two_lowest',
+                            weeksCount: season.weeksCount,
+                            dropLowestCount: season.dropLowestCount,
                         })
                         setLeaderboard(entries)
                     } catch (error) {
@@ -46,13 +58,13 @@ export function Leaderboard() {
         }
 
         loadLeaderboard()
-    }, [])
+    }, [season])
 
     // Always show loading state during SSR to prevent hydration mismatch
     if (!mounted || isLoading) {
         return (
             <div className={styles.leaderboard}>
-                <h3 className={styles.title}>Season 7 leaderboard (w/ drops)</h3>
+                <h3 className={styles.title}>{title}</h3>
                 <p className={styles.loading}>Loading...</p>
             </div>
         )
@@ -61,7 +73,7 @@ export function Leaderboard() {
     if (!useDatabase) {
         return (
             <div className={styles.leaderboard}>
-                <h3 className={styles.title}>Season 7 leaderboard (w/ drops)</h3>
+                <h3 className={styles.title}>{title}</h3>
                 <p className={styles.unavailable}>Database unavailable</p>
             </div>
         )
@@ -71,11 +83,11 @@ export function Leaderboard() {
 
     return (
         <div className={styles.leaderboard}>
-            <h3 className={styles.title}>Season 7 leaderboard (w/ drops)</h3>
+            <h3 className={styles.title}>{title}</h3>
             <div
                 className={styles.tableWrapper}
                 role="region"
-                aria-label="Season 7 leaderboard"
+                aria-label={title}
                 tabIndex={0}
             >
                 <table className={styles.table}>

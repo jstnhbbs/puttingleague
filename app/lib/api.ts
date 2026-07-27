@@ -19,6 +19,76 @@ export interface PlayoffScore {
 
 export type PlayoffScoresResponse = Record<string, PlayoffScore>
 
+export interface SeasonPlayer {
+    id: number
+    name: string
+    displayOrder: number
+}
+
+export interface SeasonSummary {
+    id: string
+    title: string
+    description: string
+    sheetUrl: string
+    status: 'completed' | 'current'
+    playoffFormat: 'six_player' | 'seven_player' | 'eight_player'
+    weeksCount: number
+    dropLowestCount: number
+    champion: string | null
+    players: SeasonPlayer[]
+}
+
+export async function fetchSeasons(): Promise<SeasonSummary[]> {
+    try {
+        const response = await fetch(`${API_URL}/api/seasons`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        if (!response.ok) throw new Error(`Failed to fetch seasons: ${response.status}`)
+        const data = (await response.json()) as { seasons?: SeasonSummary[] }
+        return data.seasons ?? []
+    } catch (error) {
+        console.error('Error fetching seasons:', error)
+        return []
+    }
+}
+
+export async function fetchCurrentSeason(): Promise<SeasonSummary | null> {
+    try {
+        const response = await fetch(`${API_URL}/api/seasons/current`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        if (!response.ok) throw new Error(`Failed to fetch current season: ${response.status}`)
+        const data = (await response.json()) as { season?: SeasonSummary | null }
+        return data.season ?? null
+    } catch (error) {
+        console.error('Error fetching current season:', error)
+        return null
+    }
+}
+
+export async function fetchSeason(seasonId: string): Promise<SeasonSummary | null> {
+    try {
+        const response = await fetch(`${API_URL}/api/seasons/${encodeURIComponent(seasonId)}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        if (!response.ok) return null
+        const data = (await response.json()) as { season?: SeasonSummary | null }
+        return data.season ?? null
+    } catch (error) {
+        console.error('Error fetching season:', error)
+        return null
+    }
+}
+
 export async function checkAdminSession(): Promise<boolean> {
     try {
         const response = await fetch(`${API_URL}/api/admin/session`, {
@@ -69,7 +139,7 @@ export async function logoutAdmin(): Promise<void> {
 }
 
 // Fetch all cells from the server for a specific season
-export async function fetchCells(seasonId: string = 'season7'): Promise<CellsResponse> {
+export async function fetchCells(seasonId: string = 'season8'): Promise<CellsResponse> {
     try {
         // Add timeout to prevent hanging
         const controller = new AbortController()
@@ -111,7 +181,7 @@ export async function fetchCells(seasonId: string = 'season7'): Promise<CellsRes
 }
 
 // Fetch playoff scores for a specific season
-export async function fetchPlayoffScores(seasonId: string = 'season7'): Promise<PlayoffScoresResponse> {
+export async function fetchPlayoffScores(seasonId: string = 'season8'): Promise<PlayoffScoresResponse> {
     try {
         const response = await fetch(`${API_URL}/api/playoff?season=${encodeURIComponent(seasonId)}`, {
             method: 'GET',
@@ -143,7 +213,7 @@ export async function fetchPlayoffScores(seasonId: string = 'season7'): Promise<
 export async function savePlayoffScore(
     gameKey: string,
     score: PlayoffScore,
-    seasonId: string = 'season7'
+    seasonId: string = 'season8'
 ): Promise<boolean> {
     try {
         const response = await fetch(`${API_URL}/api/playoff`, {
@@ -172,7 +242,7 @@ export async function savePlayoffScore(
 }
 
 // Save multiple cells to the server (batch) for a specific season
-export async function saveCells(cells: Record<string, Cell>, seasonId: string = 'season7'): Promise<boolean> {
+export async function saveCells(cells: Record<string, Cell>, seasonId: string = 'season8'): Promise<boolean> {
     try {
         const response = await fetch(`${API_URL}/api/cells/batch`, {
             method: 'POST',

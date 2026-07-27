@@ -4,6 +4,7 @@ import {
   isTursoConfigured,
   cellKeyToRelational,
   ensureSeasonCatalog,
+  CURRENT_SEASON_ID,
   type DbRow,
 } from '../../../lib/db'
 import { isAdminRequest, unauthorizedResponse } from '../../../lib/adminSession'
@@ -21,14 +22,14 @@ export async function DELETE(
   }
   try {
     const { cellKey } = await params
-    const seasonId = request.nextUrl.searchParams.get('season') || 'season7'
+    const seasonId = request.nextUrl.searchParams.get('season') || CURRENT_SEASON_ID
 
-    const rel = cellKeyToRelational(cellKey, seasonId)
+    const db = getDb()
+    const rel = await cellKeyToRelational(db, cellKey, seasonId)
     if (!rel) {
       return NextResponse.json({ error: 'Invalid cellKey format' }, { status: 400 })
     }
 
-    const db = getDb()
     await ensureSeasonCatalog(db)
     const seasonR = await db.execute('SELECT id FROM seasons WHERE season_id = ?', [seasonId])
     const seasonRow = (seasonR.rows as DbRow[])[0]

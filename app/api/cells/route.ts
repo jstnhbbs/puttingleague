@@ -2,51 +2,22 @@ import { NextRequest, NextResponse } from 'next/server'
 import {
   getDb,
   isTursoConfigured,
-  getPlayerListForSeason,
+  getSeasonPlayers,
+  getSeasonSummary,
   cellKeyToRelational,
   relationalToCellKey,
   ensureSeasonCatalog,
+  CURRENT_SEASON_ID,
   type DbRow,
 } from '../../lib/db'
 import { isAdminRequest, unauthorizedResponse } from '../../lib/adminSession'
-
-function ensureSeasonPlayerRelationships(
-  db: ReturnType<typeof getDb>,
-  seasonId: string
-): Promise<void> {
-  const playerList = [...getPlayerListForSeason(seasonId)]
-
-  return db.execute('SELECT id FROM seasons WHERE season_id = ?', [seasonId]).then((r) => {
-    const seasonRow = (r.rows as DbRow[])[0]
-    if (!seasonRow) return
-    const seasonDbId = seasonRow.id as number
-    return Promise.all(
-      playerList.map(async (playerName, colIndex) => {
-        const pr = await db.execute('SELECT id FROM players WHERE name = ?', [playerName])
-        const playerRow = (pr.rows as DbRow[])[0]
-        if (!playerRow) return
-        const playerId = playerRow.id as number
-        const ex = await db.execute(
-          'SELECT id FROM season_players WHERE season_id = ? AND player_id = ?',
-          [seasonDbId, playerId]
-        )
-        if ((ex.rows as DbRow[]).length === 0) {
-          await db.execute(
-            'INSERT OR IGNORE INTO season_players (season_id, player_id, display_order) VALUES (?, ?, ?)',
-            [seasonDbId, playerId, colIndex]
-          )
-        }
-      })
-    ).then(() => {})
-  })
-}
 
 export async function GET(request: NextRequest) {
   if (!isTursoConfigured()) {
     return NextResponse.json({}, { status: 200 })
   }
   try {
-    const seasonId = (request.nextUrl.searchParams.get('season') as string) || 'season7'
+    const seasonId = (request.nextUrl.searchParams.get('season') as string) || CURRENT_SEASON_ID
     const db = getDb()
     await ensureSeasonCatalog(db)
 
@@ -57,7 +28,9 @@ export async function GET(request: NextRequest) {
     if (!seasonRow) return NextResponse.json({})
 
     const seasonDbId = seasonRow.id as number
-    const playerList: string[] = [...getPlayerListForSeason(seasonId)]
+    const season = await getSeasonSummary(db, seasonId)
+    const weeksCount = season?.weeksCount ?? 10
+    const playerList = (await getSeasonPlayers(db, seasonId)).map((player) => player.name)
     const cells: Record<string, { value: string; isFormula: boolean }> = {}
 
     const scoresResult = await db.execute(
@@ -99,7 +72,7 @@ export async function GET(request: NextRequest) {
       const colIndex = playerList.indexOf(name)
       if (colIndex === -1) continue
       const type = row.calculation_type as string
-      const rowIndex = type === 'total' ? 10 : 11
+      const rowIndex = type === 'total' ? weeksCount : weeksCount + 1
       const cellKey = relationalToCellKey(rowIndex, colIndex)
       cells[cellKey] = {
         value: String(row.value ?? 0),
@@ -124,7 +97,7 @@ export async function POST(request: NextRequest) {
   }
   try {
     const body = await request.json()
-    const { cellKey, value, isFormula, seasonId = 'season7' } = body as {
+    const { cellKey, value, isFormula, seasonId = CURRENT_SEASON_ID } = body as {
       cellKey?: string
       value?: string
       isFormula?: boolean
@@ -134,14 +107,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'cellKey is required' }, { status: 400 })
     }
 
-    const rel = cellKeyToRelational(cellKey, seasonId)
+    const db = getDb()
+    const rel = await cellKeyToRelational(db, cellKey, seasonId)
     if (!rel) {
       return NextResponse.json({ error: 'Invalid cellKey format' }, { status: 400 })
     }
 
-    const db = getDb()
     await ensureSeasonCatalog(db)
-    await ensureSeasonPlayerRelationships(db, seasonId)
 
     const seasonR = await db.execute('SELECT id FROM seasons WHERE season_id = ?', [seasonId])
     const seasonRow = (seasonR.rows as DbRow[])[0]

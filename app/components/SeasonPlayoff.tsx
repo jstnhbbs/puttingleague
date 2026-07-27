@@ -1,8 +1,7 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
-import { fetchCells, fetchPlayoffScores, savePlayoffScore, checkHealth } from '../lib/api'
-import { EIGHT_PLAYER_COLUMNS, isEightPlayerSeason } from '../lib/seasons'
+import { useEffect, useState, useCallback, useMemo } from 'react'
+import { fetchCells, fetchPlayoffScores, savePlayoffScore, checkHealth, type SeasonSummary } from '../lib/api'
 import { getLeaderboardFromCells, type LeaderboardEntry } from '../lib/playoffUtils'
 import styles from './SeasonPlayoff.module.css'
 
@@ -25,10 +24,6 @@ const DEFAULT_SCORES: Record<GameId, GameScore> = {
   r3g2: { score1: '', score2: '' },
 }
 
-const EARLY_SEASONS = ['season1', 'season2', 'season3', 'season4'] as const
-const EARLY_COLUMN_NAMES = ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Brad']
-const SEASON5_COLUMNS = ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Tyler', 'Brad']
-
 function getWinner(score1: string, score2: string, name1: string, name2: string): string | null {
   const a = parseFloat(score1)
   const b = parseFloat(score2)
@@ -39,14 +34,16 @@ function getWinner(score1: string, score2: string, name1: string, name2: string)
 }
 
 interface SeasonPlayoffProps {
-  seasonId: string
+  season: SeasonSummary
   isAuthenticated: boolean
 }
 
-export function SeasonPlayoff({ seasonId, isAuthenticated }: SeasonPlayoffProps) {
-  const isEarly = EARLY_SEASONS.includes(seasonId as (typeof EARLY_SEASONS)[number])
-  const isSeason5 = seasonId === 'season5'
-  const isEightPlayer = isEightPlayerSeason(seasonId)
+export function SeasonPlayoff({ season, isAuthenticated }: SeasonPlayoffProps) {
+  const seasonId = season.id
+  const isEarly = season.playoffFormat === 'six_player'
+  const isSeason5 = season.playoffFormat === 'seven_player'
+  const isEightPlayer = season.playoffFormat === 'eight_player'
+  const columnNames = useMemo(() => season.players.map((player) => player.name), [season.players])
 
   if (!isEarly && !isSeason5 && !isEightPlayer) {
     return null
@@ -69,14 +66,10 @@ export function SeasonPlayoff({ seasonId, isAuthenticated }: SeasonPlayoffProps)
     }
     try {
       const cells = await fetchCells(seasonId)
-      const columnNames = isEarly
-        ? EARLY_COLUMN_NAMES
-        : isSeason5
-          ? SEASON5_COLUMNS
-          : isEightPlayer
-            ? [...EIGHT_PLAYER_COLUMNS]
-            : EARLY_COLUMN_NAMES
-      const entries = getLeaderboardFromCells(cells, columnNames)
+      const entries = getLeaderboardFromCells(cells, columnNames, {
+        weeksCount: season.weeksCount,
+        dropLowestCount: season.dropLowestCount,
+      })
       setLeaderboard(entries)
 
       const playoff = await fetchPlayoffScores(seasonId)
@@ -98,7 +91,7 @@ export function SeasonPlayoff({ seasonId, isAuthenticated }: SeasonPlayoffProps)
     } finally {
       setIsLoading(false)
     }
-  }, [seasonId, isEarly, isSeason5, isEightPlayer])
+  }, [seasonId, columnNames, season.weeksCount, season.dropLowestCount])
 
   useEffect(() => {
     loadSeason()
@@ -1021,4 +1014,3 @@ export function SeasonPlayoff({ seasonId, isAuthenticated }: SeasonPlayoffProps)
     </section>
   )
 }
-

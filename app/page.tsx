@@ -1,14 +1,29 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import styles from './page.module.css'
-import { sheets } from './data/sheets'
 import { Leaderboard } from './components/Leaderboard'
 import { SeasonPlayoff } from './components/SeasonPlayoff'
+import { fetchCurrentSeason, fetchSeasons, type SeasonSummary } from './lib/api'
 
 export default function Home() {
-    // Reverse the sheets array to display in reverse order
-    const reversedSheets = [...sheets].reverse()
+    const [seasons, setSeasons] = useState<SeasonSummary[]>([])
+    const [currentSeason, setCurrentSeason] = useState<SeasonSummary | null>(null)
+
+    useEffect(() => {
+        let isMounted = true
+
+        Promise.all([fetchSeasons(), fetchCurrentSeason()]).then(([allSeasons, activeSeason]) => {
+            if (!isMounted) return
+            setSeasons([...allSeasons].reverse())
+            setCurrentSeason(activeSeason)
+        })
+
+        return () => {
+            isMounted = false
+        }
+    }, [])
 
     return (
         <main className={styles.main}>
@@ -17,12 +32,12 @@ export default function Home() {
                 <p className={styles.subtitle}>Select a season to view</p>
                 <div className={styles.twoColumn}>
                     <div className={styles.leftColumn}>
-                        <Leaderboard />
-                        <SeasonPlayoff seasonId="season7" isAuthenticated={false} />
+                        <Leaderboard season={currentSeason} />
+                        {currentSeason && <SeasonPlayoff season={currentSeason} isAuthenticated={false} />}
                     </div>
                     <div className={styles.rightColumn}>
                         <div className={styles.grid}>
-                            {reversedSheets.map((sheet) => (
+                            {seasons.map((sheet) => (
                                 <Link
                                     key={sheet.id}
                                     href={`/sheet/${sheet.id}`}

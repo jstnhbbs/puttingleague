@@ -6,49 +6,25 @@ import styles from './TestPageContent.module.css'
 import {
     checkAdminSession,
     fetchCells,
+    fetchSeason,
     loginAdmin,
     logoutAdmin,
     saveCells,
     checkHealth,
     type Cell,
+    type SeasonSummary,
 } from '../../lib/api'
 import { SeasonPlayoff } from '../../components/SeasonPlayoff'
-
-const ROWS = 12
-
-// Get column configuration based on season
-const getColumnConfig = (seasonId: string) => {
-    // Seasons 1-4: 6 columns (without Tyler)
-    // Season 5: 7 columns (with Tyler)
-    // Seasons 6–7: 8 columns (with Tyler + 8th player)
-    const isEarlySeason = ['season1', 'season2', 'season3', 'season4'].includes(seasonId)
-    if (isEarlySeason) {
-        return {
-            cols: 6,
-            columnNames: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Brad']
-        }
-    }
-    if (seasonId === 'season6' || seasonId === 'season7') {
-        return {
-            cols: 8,
-            columnNames: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Graham', 'Tyler', 'Brad']
-        }
-    }
-    return {
-        cols: 7,
-        columnNames: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Tyler', 'Brad']
-    }
-}
 
 // Get storage key for a specific season
 const getStorageKey = (seasonId: string) => `testPageCells_${seasonId}`
 
 interface TestPageContentProps {
-    sheetTitle: string
     seasonId: string
 }
 
-export default function TestPageContent({ sheetTitle, seasonId }: TestPageContentProps) {
+export default function TestPageContent({ seasonId }: TestPageContentProps) {
+    const [season, setSeason] = useState<SeasonSummary | null>(null)
     const [cells, setCells] = useState<Record<string, Cell>>({})
     const [selectedCell, setSelectedCell] = useState<string | null>(null)
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
@@ -58,13 +34,27 @@ export default function TestPageContent({ sheetTitle, seasonId }: TestPageConten
     const [isLoading, setIsLoading] = useState<boolean>(true)
     const [useDatabase, setUseDatabase] = useState<boolean>(false)
 
-    // Get column configuration for this season
-    const { cols: COLS, columnNames } = getColumnConfig(seasonId)
+    const columnNames = season?.players.map((player) => player.name) ?? []
+    const COLS = columnNames.length
+    const weeksCount = season?.weeksCount ?? 10
+    const dropLowestCount = season?.dropLowestCount ?? 2
+    const totalRowIndex = weeksCount
+    const dropsRowIndex = weeksCount + 1
+    const ROWS = weeksCount + 2
 
-    // Check if database is available and load cells
+    // Check if database is available and load season metadata/cells
     useEffect(() => {
         const loadCells = async () => {
             setIsLoading(true)
+
+            const loadedSeason = await fetchSeason(seasonId)
+            setSeason(loadedSeason)
+            if (!loadedSeason) {
+                setCells({})
+                setUseDatabase(false)
+                setIsLoading(false)
+                return
+            }
 
             const dbAvailable = await checkHealth()
             setUseDatabase(dbAvailable)
@@ -229,7 +219,7 @@ export default function TestPageContent({ sheetTitle, seasonId }: TestPageConten
     const calculateTotalMinusTwoLowest = (col: number): number => {
         // Get all values from rows 1-10 (indices 0-9), only including cells with actual values
         const values: number[] = []
-        for (let r = 0; r <= 9; r++) {
+        for (let r = 0; r < weeksCount; r++) {
             const key = getCellKey(r, col)
             const cell = cells[key]
             if (cell && cell.value.trim() !== '') {
@@ -248,33 +238,27 @@ export default function TestPageContent({ sheetTitle, seasonId }: TestPageConten
             }
         }
 
-        // Need at least 2 values to subtract two lowest
-        if (values.length < 2) {
-            // If less than 2 values, return the sum (or 0 if no values)
-            return values.reduce((sum, val) => sum + val, 0)
+        const total = values.reduce((sum, val) => sum + val, 0)
+        if (values.length <= dropLowestCount) {
+            return total
         }
 
-        // Calculate total
-        const total = values.reduce((sum, val) => sum + val, 0)
-
-        // Find two lowest values
         const sortedValues = [...values].sort((a, b) => a - b)
-        const twoLowest = sortedValues.slice(0, 2)
-        const sumOfTwoLowest = twoLowest[0] + twoLowest[1]
+        const droppedScores = sortedValues.slice(0, dropLowestCount)
+        const droppedTotal = droppedScores.reduce((sum, val) => sum + val, 0)
 
-        // Return total minus two lowest
-        return total - sumOfTwoLowest
+        return total - droppedTotal
     }
 
     const getCellValue = (row: number, col: number): string => {
-        // Row 11 (index 10) automatically sums rows 1-10 (indices 0-9)
-        if (row === 10) {
-            const sum = sumRange(0, 9, col)
+        // Total row automatically sums week rows.
+        if (row === totalRowIndex) {
+            const sum = sumRange(0, weeksCount - 1, col)
             return String(sum)
         }
 
-        // Row 12 (index 11) calculates total minus two lowest scores
-        if (row === 11) {
+        // Drops row calculates total minus the configured number of lowest scores.
+        if (row === dropsRowIndex) {
             const result = calculateTotalMinusTwoLowest(col)
             return String(result)
         }
@@ -314,12 +298,12 @@ export default function TestPageContent({ sheetTitle, seasonId }: TestPageConten
                     if (refCell && !refCell.isFormula) {
                         return refCell.value || '0'
                     }
-                    // For row 11, get the calculated sum
-                    if (rowIndex === 10) {
-                        return String(sumRange(0, 9, colIndex))
+                    // For total row, get the calculated sum
+                    if (rowIndex === totalRowIndex) {
+                        return String(sumRange(0, weeksCount - 1, colIndex))
                     }
-                    // For row 12, get the calculated total minus two lowest
-                    if (rowIndex === 11) {
+                    // For drops row, get the calculated total minus configured drops
+                    if (rowIndex === dropsRowIndex) {
                         return String(calculateTotalMinusTwoLowest(colIndex))
                     }
                     return '0'
@@ -343,8 +327,8 @@ export default function TestPageContent({ sheetTitle, seasonId }: TestPageConten
         if (!isAuthenticated) {
             return
         }
-        // Row 11 (index 10) and Row 12 (index 11) are read-only
-        if (row === 10 || row === 11) {
+        // Total and drops rows are read-only
+        if (row === totalRowIndex || row === dropsRowIndex) {
             return
         }
 
@@ -358,15 +342,15 @@ export default function TestPageContent({ sheetTitle, seasonId }: TestPageConten
                 isFormula: isFormula
             }
         }))
-    }, [isAuthenticated])
+    }, [isAuthenticated, totalRowIndex, dropsRowIndex])
 
     const handleCellFocus = (row: number, col: number) => {
         // Only allow editing if authenticated
         if (!isAuthenticated) {
             return
         }
-        // Row 11 (index 10) and Row 12 (index 11) are read-only
-        if (row === 10 || row === 11) {
+        // Total and drops rows are read-only
+        if (row === totalRowIndex || row === dropsRowIndex) {
             return
         }
         setSelectedCell(getCellKey(row, col))
@@ -378,7 +362,7 @@ export default function TestPageContent({ sheetTitle, seasonId }: TestPageConten
 
     // Highlight: 2 lowest scores per column (red), highest score per row (green). Only score rows 0-9.
     const getNumericValue = (r: number, c: number): number | null => {
-        if (r < 0 || r > 9) return null
+        if (r < 0 || r >= weeksCount) return null
         const v = getCellValue(r, c)
         const n = parseFloat(v)
         return Number.isNaN(n) ? null : n
@@ -386,7 +370,7 @@ export default function TestPageContent({ sheetTitle, seasonId }: TestPageConten
     const lowInColumn = new Set<string>()
     for (let c = 0; c < COLS; c++) {
         const entries: { row: number; value: number }[] = []
-        for (let r = 0; r <= 9; r++) {
+        for (let r = 0; r < weeksCount; r++) {
             const n = getNumericValue(r, c)
             if (n !== null) entries.push({ row: r, value: n })
         }
@@ -394,7 +378,7 @@ export default function TestPageContent({ sheetTitle, seasonId }: TestPageConten
         entries.slice(0, 2).forEach(({ row }) => lowInColumn.add(getCellKey(row, c)))
     }
     const highInRow = new Set<string>()
-    for (let r = 0; r <= 9; r++) {
+    for (let r = 0; r < weeksCount; r++) {
         const entries: { col: number; value: number }[] = []
         for (let c = 0; c < COLS; c++) {
             const n = getNumericValue(r, c)
@@ -409,8 +393,11 @@ export default function TestPageContent({ sheetTitle, seasonId }: TestPageConten
     const getColumnLetter = (col: number) => columnNames[col] || `Col ${col + 1}`
 
     // Customize row headers here
-    // Rows 1-10 are regular rounds, row 11 is sum, row 12 is total minus two lowest
-    const rowNames = ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6', 'Week 7', 'Week 8', 'Week 9', 'Week 10', 'Total', 'w/ Drops']
+    const rowNames = [
+        ...Array.from({ length: weeksCount }, (_, index) => `Week ${index + 1}`),
+        'Total',
+        'w/ Drops',
+    ]
     const getRowLabel = (row: number) => rowNames[row] || `Row ${row + 1}`
 
     // Password prompt overlay (shown as modal when user clicks unlock)
@@ -423,7 +410,7 @@ export default function TestPageContent({ sheetTitle, seasonId }: TestPageConten
                         ← Back to Home
                     </Link>
                     <div className={styles.headerRow}>
-                        <h1 className={styles.title}>{sheetTitle}</h1>
+                        <h1 className={styles.title}>{season?.title ?? 'Season'}</h1>
                         <div className={styles.headerButtons}>
                             {useDatabase && (
                                 <span className={styles.dbStatus} title="Connected to database">
@@ -474,8 +461,8 @@ export default function TestPageContent({ sheetTitle, seasonId }: TestPageConten
                                     {Array.from({ length: COLS }, (_, col) => {
                                         const key = getCellKey(row, col)
                                         const cell = cells[key]
-                                        const isRow11 = row === 10
-                                        const isRow12 = row === 11
+                                        const isRow11 = row === totalRowIndex
+                                        const isRow12 = row === dropsRowIndex
                                         const isCalculatedRow = isRow11 || isRow12
 
                                         // For calculated rows (11 and 12), always show the calculated value
@@ -510,9 +497,9 @@ export default function TestPageContent({ sheetTitle, seasonId }: TestPageConten
                                                             !isAuthenticated
                                                                 ? 'View-only mode - Enter password to edit'
                                                                 : isRow11
-                                                                    ? `Sum of ${getColumnLetter(col)}1-${getColumnLetter(col)}10`
+                                                                    ? `Sum of ${getColumnLetter(col)}1-${getColumnLetter(col)}${weeksCount}`
                                                                     : isRow12
-                                                                        ? `Total of ${getColumnLetter(col)}1-${getColumnLetter(col)}10 minus two lowest scores`
+                                                                        ? `Total of ${getColumnLetter(col)}1-${getColumnLetter(col)}${weeksCount} minus ${dropLowestCount} lowest scores`
                                                                         : (cell?.isFormula ? `Formula: ${cell.value}` : '')
                                                         }
                                                     >
@@ -528,7 +515,7 @@ export default function TestPageContent({ sheetTitle, seasonId }: TestPageConten
                     </table>
                 </div>
 
-                <SeasonPlayoff seasonId={seasonId} isAuthenticated={isAuthenticated} />
+                {season && <SeasonPlayoff season={season} isAuthenticated={isAuthenticated} />}
 
                 {/* Password prompt modal overlay */}
                 {showPasswordPrompt && !isAuthenticated && (
@@ -578,16 +565,16 @@ export default function TestPageContent({ sheetTitle, seasonId }: TestPageConten
                     <ul>
                         {isAuthenticated ? (
                             <>
-                                <li>Click any cell to edit (except rows 11 and 12)</li>
+                                <li>Click any cell to edit (except calculated rows)</li>
                                 <li>Enter numbers directly (e.g., 123, 45.67)</li>
-                                <li><strong>Row 11: Automatically sums rows 1-10 for each column</strong></li>
-                                <li><strong>Row 12: Total of rows 1-10 minus the two lowest scores in that column</strong></li>
+                                <li><strong>Total: Automatically sums every week for each column</strong></li>
+                                <li><strong>w/ Drops: Total minus the configured lowest scores in that column</strong></li>
                             </>
                         ) : (
                             <>
                                 <li>This page is in view-only mode</li>
                                 <li>Click "Unlock Editing" to enable editing with admin password</li>
-                                <li>All calculations (rows 11 and 12) are still visible and update automatically</li>
+                                <li>All calculations are still visible and update automatically</li>
                             </>
                         )}
                     </ul>

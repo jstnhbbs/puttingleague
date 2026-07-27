@@ -33,18 +33,25 @@ if (!fs.existsSync(dataDir)) {
 const dbPath = path.join(dataDir, 'puttingleague.db');
 const db = new Database(dbPath);
 
+const DEFAULT_SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQbJtP2iVNdFvBKQiZeMJIuiEsLY5M8mv3hcGFXXxJSinxSWWJaBdCtaNZWILdAiT3iOafQoDlpD95N/pubhtml?gid=154588723&single=true';
+
 // Player names mapping (column index to name)
 const PLAYER_NAMES = {
     early: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Brad'], // Seasons 1-4
     late: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Tyler', 'Brad'], // Season 5
-    season6: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Graham', 'Tyler', 'Brad'] // Season 6
+    eightPlayer: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Graham', 'Tyler', 'Brad'] // Seasons 6+
 };
 
-const EARLY_SEASONS = ['season1', 'season2', 'season3', 'season4'];
-
-function isEightPlayerSeason(seasonId) {
-    return seasonId === 'season6' || seasonId === 'season7';
-}
+const SEASONS = [
+    { id: 'season1', title: 'Season 1', desc: '🏆 Hunter Thomas', status: 'completed', champion: 'Hunter', sheetUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQbJtP2iVNdFvBKQiZeMJIuiEsLY5M8mv3hcGFXXxJSinxSWWJaBdCtaNZWILdAiT3iOafQoDlpD95N/pubhtml?gid=1134880669&single=true', playoffFormat: 'six_player', weeksCount: 10, dropLowestCount: 2, players: PLAYER_NAMES.early },
+    { id: 'season2', title: 'Season 2', desc: '🏆 Hunter Thomas', status: 'completed', champion: 'Hunter', sheetUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQbJtP2iVNdFvBKQiZeMJIuiEsLY5M8mv3hcGFXXxJSinxSWWJaBdCtaNZWILdAiT3iOafQoDlpD95N/pubhtml?gid=1204258671&single=true', playoffFormat: 'six_player', weeksCount: 10, dropLowestCount: 2, players: PLAYER_NAMES.early },
+    { id: 'season3', title: 'Season 3', desc: '🏆 Hunter Thomas', status: 'completed', champion: 'Hunter', sheetUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQbJtP2iVNdFvBKQiZeMJIuiEsLY5M8mv3hcGFXXxJSinxSWWJaBdCtaNZWILdAiT3iOafQoDlpD95N/pubhtml?gid=0&single=true', playoffFormat: 'six_player', weeksCount: 10, dropLowestCount: 2, players: PLAYER_NAMES.early },
+    { id: 'season4', title: 'Season 4', desc: '🏆 Trevor Staub', status: 'completed', champion: 'Trevor', sheetUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQbJtP2iVNdFvBKQiZeMJIuiEsLY5M8mv3hcGFXXxJSinxSWWJaBdCtaNZWILdAiT3iOafQoDlpD95N/pubhtml?gid=1919204812&single=true', playoffFormat: 'six_player', weeksCount: 10, dropLowestCount: 2, players: PLAYER_NAMES.early },
+    { id: 'season5', title: 'Season 5', desc: '🏆 Trevor Staub', status: 'completed', champion: 'Trevor', sheetUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQbJtP2iVNdFvBKQiZeMJIuiEsLY5M8mv3hcGFXXxJSinxSWWJaBdCtaNZWILdAiT3iOafQoDlpD95N/pubhtml?gid=643864506&single=true', playoffFormat: 'seven_player', weeksCount: 10, dropLowestCount: 2, players: PLAYER_NAMES.late },
+    { id: 'season6', title: 'Season 6', desc: '🏆 Hunter Thomas', status: 'completed', champion: 'Hunter', sheetUrl: DEFAULT_SHEET_URL, playoffFormat: 'eight_player', weeksCount: 10, dropLowestCount: 2, players: PLAYER_NAMES.eightPlayer },
+    { id: 'season7', title: 'Season 7', desc: '🏆 Hunter Thomas', status: 'completed', champion: 'Hunter', sheetUrl: DEFAULT_SHEET_URL, playoffFormat: 'eight_player', weeksCount: 10, dropLowestCount: 2, players: PLAYER_NAMES.eightPlayer },
+    { id: 'season8', title: 'Season 8', desc: 'Current season', status: 'current', champion: null, sheetUrl: DEFAULT_SHEET_URL, playoffFormat: 'eight_player', weeksCount: 10, dropLowestCount: 2, players: PLAYER_NAMES.eightPlayer }
+];
 
 // Create relational tables
 db.exec(`
@@ -62,9 +69,16 @@ db.exec(`
       season_id TEXT NOT NULL UNIQUE,
       title TEXT NOT NULL,
       description TEXT,
+      status TEXT NOT NULL DEFAULT 'completed',
+      champion_player_id INTEGER,
+      sheet_url TEXT,
+      playoff_format TEXT NOT NULL DEFAULT 'six_player',
+      weeks_count INTEGER NOT NULL DEFAULT 10,
+      drop_lowest_count INTEGER NOT NULL DEFAULT 2,
       start_date DATE,
       end_date DATE,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (champion_player_id) REFERENCES players(id)
   );
   
   -- Season-Player junction table
@@ -115,28 +129,47 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_calculated_scores_season_player ON calculated_scores(season_id, player_id);
 `);
 
+function addColumnIfMissing(statement) {
+    try {
+        db.exec(statement);
+    } catch (error) {
+        if (!String(error.message).toLowerCase().includes('duplicate column')) {
+            throw error;
+        }
+    }
+}
+
+addColumnIfMissing("ALTER TABLE seasons ADD COLUMN status TEXT DEFAULT 'completed'");
+addColumnIfMissing('ALTER TABLE seasons ADD COLUMN champion_player_id INTEGER');
+addColumnIfMissing('ALTER TABLE seasons ADD COLUMN sheet_url TEXT');
+addColumnIfMissing("ALTER TABLE seasons ADD COLUMN playoff_format TEXT DEFAULT 'six_player'");
+addColumnIfMissing('ALTER TABLE seasons ADD COLUMN weeks_count INTEGER DEFAULT 10');
+addColumnIfMissing('ALTER TABLE seasons ADD COLUMN drop_lowest_count INTEGER DEFAULT 2');
+
 // Initialize players and seasons if they don't exist
 try {
     // Insert players
     const insertPlayer = db.prepare('INSERT OR IGNORE INTO players (name, display_order) VALUES (?, ?)');
-    const allPlayers = [...new Set([...PLAYER_NAMES.early, ...PLAYER_NAMES.late, ...PLAYER_NAMES.season6])];
+    const allPlayers = [...new Set(SEASONS.flatMap(season => season.players))];
     allPlayers.forEach((name, index) => {
         insertPlayer.run(name, index);
     });
 
     // Insert seasons
-    const insertSeason = db.prepare('INSERT OR IGNORE INTO seasons (season_id, title, description) VALUES (?, ?, ?)');
-    const seasons = [
-        { id: 'season1', title: 'Season 1', desc: '🏆 Hunter Thomas' },
-        { id: 'season2', title: 'Season 2', desc: '🏆 Hunter Thomas' },
-        { id: 'season3', title: 'Season 3', desc: '🏆 Hunter Thomas' },
-        { id: 'season4', title: 'Season 4', desc: '🏆 Trevor Staub' },
-        { id: 'season5', title: 'Season 5', desc: '🏆 Trevor Staub' },
-        { id: 'season6', title: 'Season 6', desc: '🏆 Hunter Thomas' },
-        { id: 'season7', title: 'Season 7', desc: 'Current season' }
-    ];
-    seasons.forEach(season => {
-        insertSeason.run(season.id, season.title, season.desc);
+    const insertSeason = db.prepare(`
+        INSERT OR IGNORE INTO seasons
+            (season_id, title, description, status, champion_player_id, sheet_url, playoff_format, weeks_count, drop_lowest_count)
+        VALUES (?, ?, ?, ?, (SELECT id FROM players WHERE name = ?), ?, ?, ?, ?)
+    `);
+    const updateSeason = db.prepare(`
+        UPDATE seasons
+        SET title = ?, description = ?, status = ?, champion_player_id = (SELECT id FROM players WHERE name = ?),
+            sheet_url = ?, playoff_format = ?, weeks_count = ?, drop_lowest_count = ?
+        WHERE season_id = ?
+    `);
+    SEASONS.forEach(season => {
+        insertSeason.run(season.id, season.title, season.desc, season.status, season.champion, season.sheetUrl, season.playoffFormat, season.weeksCount, season.dropLowestCount);
+        updateSeason.run(season.title, season.desc, season.status, season.champion, season.sheetUrl, season.playoffFormat, season.weeksCount, season.dropLowestCount, season.id);
     });
 
     // Set up season-player relationships
@@ -144,12 +177,11 @@ try {
     const getPlayerId = db.prepare('SELECT id FROM players WHERE name = ?');
     const insertSeasonPlayer = db.prepare('INSERT OR IGNORE INTO season_players (season_id, player_id, display_order) VALUES (?, ?, ?)');
 
-    seasons.forEach(season => {
+    SEASONS.forEach(season => {
         const seasonRow = getSeasonId.get(season.id);
         if (seasonRow) {
-            const playerList = isEightPlayerSeason(season.id) ? PLAYER_NAMES.season6 : (EARLY_SEASONS.includes(season.id) ? PLAYER_NAMES.early : PLAYER_NAMES.late);
-            console.log(`Setting up ${season.id} with ${playerList.length} players: ${playerList.join(', ')}`);
-            playerList.forEach((playerName, colIndex) => {
+            console.log(`Setting up ${season.id} with ${season.players.length} players: ${season.players.join(', ')}`);
+            season.players.forEach((playerName, colIndex) => {
                 const playerRow = getPlayerId.get(playerName);
                 if (playerRow) {
                     insertSeasonPlayer.run(seasonRow.id, playerRow.id, colIndex);
@@ -167,6 +199,24 @@ try {
     console.error('Error initializing players/seasons:', error);
 }
 
+function getSeasonConfig(seasonId) {
+    return SEASONS.find(season => season.id === seasonId) || SEASONS[SEASONS.length - 1];
+}
+
+function getPlayerListForSeason(seasonId) {
+    const rows = db.prepare(`
+        SELECT p.name
+        FROM seasons s
+        JOIN season_players sp ON sp.season_id = s.id
+        JOIN players p ON p.id = sp.player_id
+        WHERE s.season_id = ?
+        ORDER BY sp.display_order
+    `).all(seasonId);
+
+    if (rows.length > 0) return rows.map(row => row.name);
+    return getSeasonConfig(seasonId).players;
+}
+
 // Helper function to convert cell_key (row-col) to relational data
 function cellKeyToRelational(cellKey, seasonId) {
     const [rowStr, colStr] = cellKey.split('-');
@@ -175,16 +225,20 @@ function cellKeyToRelational(cellKey, seasonId) {
 
     if (isNaN(row) || isNaN(col)) return null;
 
-    const playerList = isEightPlayerSeason(seasonId) ? PLAYER_NAMES.season6 : (EARLY_SEASONS.includes(seasonId) ? PLAYER_NAMES.early : PLAYER_NAMES.late);
+    const playerList = getPlayerListForSeason(seasonId);
     if (col >= playerList.length) return null;
+    const seasonConfig = getSeasonConfig(seasonId);
+    const weeksCount = seasonConfig.weeksCount;
+    const totalRowIndex = weeksCount;
+    const dropsRowIndex = weeksCount + 1;
 
     return {
         row,
         col,
         playerName: playerList[col],
-        week: row >= 0 && row <= 9 ? row + 1 : null,
-        isTotal: row === 10,
-        isTotalMinusTwoLowest: row === 11
+        week: row >= 0 && row < weeksCount ? row + 1 : null,
+        isTotal: row === totalRowIndex,
+        isTotalMinusTwoLowest: row === dropsRowIndex
     };
 }
 
@@ -201,7 +255,7 @@ function ensureSeasonPlayerRelationships(seasonId) {
         return false;
     }
 
-    const playerList = isEightPlayerSeason(seasonId) ? PLAYER_NAMES.season6 : (EARLY_SEASONS.includes(seasonId) ? PLAYER_NAMES.early : PLAYER_NAMES.late);
+    const playerList = getPlayerListForSeason(seasonId);
     const getPlayerId = db.prepare('SELECT id FROM players WHERE name = ?');
     const insertSeasonPlayer = db.prepare('INSERT OR IGNORE INTO season_players (season_id, player_id, display_order) VALUES (?, ?, ?)');
     const checkRelationship = db.prepare('SELECT id FROM season_players WHERE season_id = ? AND player_id = ?');
@@ -225,7 +279,7 @@ function ensureSeasonPlayerRelationships(seasonId) {
 // Get all cells for a specific season (converted from relational to cell format for backward compatibility)
 app.get('/api/cells', (req, res) => {
     try {
-        const seasonId = req.query.season || 'season7';
+        const seasonId = req.query.season || 'season8';
         console.log(`[${new Date().toISOString()}] GET /api/cells?season=${seasonId}`);
 
         res.setHeader('Content-Type', 'application/json');
@@ -237,7 +291,8 @@ app.get('/api/cells', (req, res) => {
         }
 
         const seasonDbId = seasonRow.id;
-        const playerList = isEightPlayerSeason(seasonId) ? PLAYER_NAMES.season6 : (EARLY_SEASONS.includes(seasonId) ? PLAYER_NAMES.early : PLAYER_NAMES.late);
+        const playerList = getPlayerListForSeason(seasonId);
+        const seasonConfig = getSeasonConfig(seasonId);
         const cells = {};
 
         // Get all scores for this season
@@ -279,7 +334,7 @@ app.get('/api/cells', (req, res) => {
         calculated.forEach(calc => {
             const colIndex = playerList.indexOf(calc.name);
             if (colIndex !== -1) {
-                const row = calc.calculation_type === 'total' ? 10 : 11;
+                const row = calc.calculation_type === 'total' ? seasonConfig.weeksCount : seasonConfig.weeksCount + 1;
                 const cellKey = relationalToCellKey(row, colIndex);
                 cells[cellKey] = {
                     value: String(calc.value),
@@ -300,7 +355,7 @@ app.get('/api/cells', (req, res) => {
 // Save a single cell (converted from cell format to relational)
 app.post('/api/cells', (req, res) => {
     try {
-        const { cellKey, value, isFormula, seasonId = 'season7' } = req.body;
+        const { cellKey, value, isFormula, seasonId = 'season8' } = req.body;
 
         if (!cellKey) {
             return res.status(400).json({ error: 'cellKey is required' });
@@ -370,7 +425,7 @@ app.post('/api/cells', (req, res) => {
 // Save multiple cells (batch update) - converted from cell format to relational
 app.post('/api/cells/batch', (req, res) => {
     try {
-        const seasonId = req.body.seasonId || 'season7';
+        const seasonId = req.body.seasonId || 'season8';
         console.log(`[${new Date().toISOString()}] POST /api/cells/batch?season=${seasonId}`);
         const { cells } = req.body;
 
@@ -505,7 +560,7 @@ app.post('/api/cells/batch', (req, res) => {
 app.delete('/api/cells/:cellKey', (req, res) => {
     try {
         const { cellKey } = req.params;
-        const seasonId = req.query.season || 'season7';
+        const seasonId = req.query.season || 'season8';
 
         const rel = cellKeyToRelational(cellKey, seasonId);
         if (!rel) {
@@ -575,7 +630,7 @@ app.get('/api/debug/season/:seasonId', (req, res) => {
             season: seasonRow,
             players: players,
             scoresCount: scoresCount.count,
-            expectedPlayers: isEightPlayerSeason(seasonId) ? PLAYER_NAMES.season6 : (EARLY_SEASONS.includes(seasonId) ? PLAYER_NAMES.early : PLAYER_NAMES.late)
+            expectedPlayers: getPlayerListForSeason(seasonId)
         });
     } catch (error) {
         console.error('Error in debug endpoint:', error);

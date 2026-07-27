@@ -1,7 +1,5 @@
 import type { Cell } from './api'
 
-const ROW_12_INDEX = 11
-
 function getCellKey(row: number, col: number): string {
   return `${row}-${col}`
 }
@@ -30,10 +28,13 @@ function getCellValue(
   cells: Record<string, Cell>,
   row: number,
   col: number,
-  getRow12: GetRow12
+  getRow12: GetRow12,
+  weeksCount: number
 ): string {
-  if (row === 10) return String(sumRange(cells, 0, 9, col))
-  if (row === 11) return String(getRow12(col))
+  const totalRowIndex = weeksCount
+  const dropsRowIndex = weeksCount + 1
+  if (row === totalRowIndex) return String(sumRange(cells, 0, weeksCount - 1, col))
+  if (row === dropsRowIndex) return String(getRow12(col))
   const key = getCellKey(row, col)
   const cell = cells[key]
   if (!cell) return ''
@@ -57,8 +58,8 @@ function getCellValue(
         const refKey = getCellKey(rowIndex, colIndex)
         const refCell = cells[refKey]
         if (refCell && !refCell.isFormula) return refCell.value || '0'
-        if (rowIndex === 10) return String(sumRange(cells, 0, 9, colIndex))
-        if (rowIndex === 11) return String(getRow12(colIndex))
+        if (rowIndex === totalRowIndex) return String(sumRange(cells, 0, weeksCount - 1, colIndex))
+        if (rowIndex === dropsRowIndex) return String(getRow12(colIndex))
         return '0'
       })
       if (/^[0-9+\-*/().\s]+$/.test(evaluated)) return String(Function(`"use strict"; return (${evaluated})`)())
@@ -73,19 +74,22 @@ function getCellValue(
 function calculateTotalMinusTwo(
   cells: Record<string, Cell>,
   col: number,
-  getRow12: GetRow12
+  getRow12: GetRow12,
+  weeksCount: number,
+  dropLowestCount: number
 ): number {
   const values: number[] = []
-  for (let r = 0; r <= 9; r++) {
-    const valStr = getCellValue(cells, r, col, getRow12)
+  for (let r = 0; r < weeksCount; r++) {
+    const valStr = getCellValue(cells, r, col, getRow12, weeksCount)
     if (valStr.trim() === '') continue
     const num = parseFloat(valStr)
     if (!Number.isNaN(num)) values.push(num)
   }
-  if (values.length < 2) return values.reduce((s, v) => s + v, 0)
   const total = values.reduce((s, v) => s + v, 0)
+  if (values.length <= dropLowestCount) return total
   const sorted = [...values].sort((a, b) => a - b)
-  return total - sorted[0] - sorted[1]
+  const dropped = sorted.slice(0, dropLowestCount).reduce((s, v) => s + v, 0)
+  return total - dropped
 }
 
 export interface LeaderboardEntry {
@@ -98,6 +102,8 @@ export type LeaderboardCalculation = 'total' | 'total_minus_two_lowest'
 
 export interface GetLeaderboardOptions {
   calculation?: LeaderboardCalculation
+  weeksCount?: number
+  dropLowestCount?: number
 }
 
 /**
@@ -109,13 +115,15 @@ export function getLeaderboardFromCells(
   options: GetLeaderboardOptions = {}
 ): LeaderboardEntry[] {
   const cols = columnNames.length
+  const weeksCount = options.weeksCount ?? 10
+  const dropLowestCount = options.dropLowestCount ?? 2
   // Tie the knot: getRow12 uses calculateTotalMinusTwo which uses getCellValue which uses getRow12
-  const getRow12: GetRow12 = (col) => calculateTotalMinusTwo(cells, col, getRow12)
+  const getRow12: GetRow12 = (col) => calculateTotalMinusTwo(cells, col, getRow12, weeksCount, dropLowestCount)
   const scores: { name: string; score: number }[] = []
   const calculation: LeaderboardCalculation = options.calculation ?? 'total_minus_two_lowest'
-  const targetRowIndex = calculation === 'total' ? 10 : ROW_12_INDEX
+  const targetRowIndex = calculation === 'total' ? weeksCount : weeksCount + 1
   for (let c = 0; c < cols; c++) {
-    const val = getCellValue(cells, targetRowIndex, c, getRow12)
+    const val = getCellValue(cells, targetRowIndex, c, getRow12, weeksCount)
     const score = parseFloat(val) || 0
     scores.push({ name: columnNames[c] ?? `Player ${c + 1}`, score })
   }

@@ -14,9 +14,16 @@ CREATE TABLE
         season_id TEXT NOT NULL UNIQUE,
         title TEXT NOT NULL,
         description TEXT,
+        status TEXT NOT NULL DEFAULT 'completed',
+        champion_player_id INTEGER,
+        sheet_url TEXT,
+        playoff_format TEXT NOT NULL DEFAULT 'six_player',
+        weeks_count INTEGER NOT NULL DEFAULT 10,
+        drop_lowest_count INTEGER NOT NULL DEFAULT 2,
         start_date DATE,
         end_date DATE,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (champion_player_id) REFERENCES players (id)
     );
 
 CREATE TABLE
@@ -84,16 +91,59 @@ VALUES
 
 -- Seed seasons
 INSERT
-OR IGNORE INTO seasons (season_id, title, description)
+OR IGNORE INTO seasons (
+    season_id,
+    title,
+    description,
+    status,
+    champion_player_id,
+    sheet_url,
+    playoff_format,
+    weeks_count,
+    drop_lowest_count
+)
 VALUES
-    ('season1', 'Season 1', '🏆 Hunter Thomas'),
-    ('season2', 'Season 2', '🏆 Hunter Thomas'),
-    ('season3', 'Season 3', '🏆 Hunter Thomas'),
-    ('season4', 'Season 4', '🏆 Trevor Staub'),
-    ('season5', 'Season 5', '🏆 Trevor Staub'),
-    ('season6', 'Season 6', 'View Season 6');
+    ('season1', 'Season 1', '🏆 Hunter Thomas', 'completed', (SELECT id FROM players WHERE name = 'Hunter'), 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQbJtP2iVNdFvBKQiZeMJIuiEsLY5M8mv3hcGFXXxJSinxSWWJaBdCtaNZWILdAiT3iOafQoDlpD95N/pubhtml?gid=1134880669&single=true', 'six_player', 10, 2),
+    ('season2', 'Season 2', '🏆 Hunter Thomas', 'completed', (SELECT id FROM players WHERE name = 'Hunter'), 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQbJtP2iVNdFvBKQiZeMJIuiEsLY5M8mv3hcGFXXxJSinxSWWJaBdCtaNZWILdAiT3iOafQoDlpD95N/pubhtml?gid=1204258671&single=true', 'six_player', 10, 2),
+    ('season3', 'Season 3', '🏆 Hunter Thomas', 'completed', (SELECT id FROM players WHERE name = 'Hunter'), 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQbJtP2iVNdFvBKQiZeMJIuiEsLY5M8mv3hcGFXXxJSinxSWWJaBdCtaNZWILdAiT3iOafQoDlpD95N/pubhtml?gid=0&single=true', 'six_player', 10, 2),
+    ('season4', 'Season 4', '🏆 Trevor Staub', 'completed', (SELECT id FROM players WHERE name = 'Trevor'), 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQbJtP2iVNdFvBKQiZeMJIuiEsLY5M8mv3hcGFXXxJSinxSWWJaBdCtaNZWILdAiT3iOafQoDlpD95N/pubhtml?gid=1919204812&single=true', 'six_player', 10, 2),
+    ('season5', 'Season 5', '🏆 Trevor Staub', 'completed', (SELECT id FROM players WHERE name = 'Trevor'), 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQbJtP2iVNdFvBKQiZeMJIuiEsLY5M8mv3hcGFXXxJSinxSWWJaBdCtaNZWILdAiT3iOafQoDlpD95N/pubhtml?gid=643864506&single=true', 'seven_player', 10, 2),
+    ('season6', 'Season 6', '🏆 Hunter Thomas', 'completed', (SELECT id FROM players WHERE name = 'Hunter'), 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQbJtP2iVNdFvBKQiZeMJIuiEsLY5M8mv3hcGFXXxJSinxSWWJaBdCtaNZWILdAiT3iOafQoDlpD95N/pubhtml?gid=154588723&single=true', 'eight_player', 10, 2),
+    ('season7', 'Season 7', '🏆 Hunter Thomas', 'completed', (SELECT id FROM players WHERE name = 'Hunter'), 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQbJtP2iVNdFvBKQiZeMJIuiEsLY5M8mv3hcGFXXxJSinxSWWJaBdCtaNZWILdAiT3iOafQoDlpD95N/pubhtml?gid=154588723&single=true', 'eight_player', 10, 2),
+    ('season8', 'Season 8', 'Current season', 'current', NULL, 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQbJtP2iVNdFvBKQiZeMJIuiEsLY5M8mv3hcGFXXxJSinxSWWJaBdCtaNZWILdAiT3iOafQoDlpD95N/pubhtml?gid=154588723&single=true', 'eight_player', 10, 2);
 
--- Season–player links (seasons 1–4: 6 players; season5: 7; season6: 8)
+UPDATE seasons
+SET
+    title = CASE season_id
+        WHEN 'season1' THEN 'Season 1'
+        WHEN 'season2' THEN 'Season 2'
+        WHEN 'season3' THEN 'Season 3'
+        WHEN 'season4' THEN 'Season 4'
+        WHEN 'season5' THEN 'Season 5'
+        WHEN 'season6' THEN 'Season 6'
+        WHEN 'season7' THEN 'Season 7'
+        WHEN 'season8' THEN 'Season 8'
+        ELSE title
+    END,
+    status = CASE season_id WHEN 'season8' THEN 'current' ELSE 'completed' END,
+    champion_player_id = CASE season_id
+        WHEN 'season4' THEN (SELECT id FROM players WHERE name = 'Trevor')
+        WHEN 'season5' THEN (SELECT id FROM players WHERE name = 'Trevor')
+        WHEN 'season8' THEN NULL
+        ELSE (SELECT id FROM players WHERE name = 'Hunter')
+    END,
+    playoff_format = CASE season_id
+        WHEN 'season5' THEN 'seven_player'
+        WHEN 'season6' THEN 'eight_player'
+        WHEN 'season7' THEN 'eight_player'
+        WHEN 'season8' THEN 'eight_player'
+        ELSE 'six_player'
+    END,
+    weeks_count = 10,
+    drop_lowest_count = 2
+WHERE season_id IN ('season1', 'season2', 'season3', 'season4', 'season5', 'season6', 'season7', 'season8');
+
+-- Season–player links (seasons 1–4: 6 players; season5: 7; seasons 6 and later: 8)
 INSERT
 OR IGNORE INTO season_players (season_id, player_id, display_order)
 SELECT
@@ -126,4 +176,4 @@ FROM
     seasons s,
     players p
 WHERE
-    s.season_id = 'season6';
+    s.season_id IN ('season6', 'season7', 'season8');

@@ -26,10 +26,26 @@ const db = new Database(dbPath);
 // Player names mapping (column index to name)
 const PLAYER_NAMES = {
     early: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Brad'], // Seasons 1-4
-    late: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Tyler', 'Brad'] // Seasons 5-6
+    late: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Tyler', 'Brad'], // Season 5
+    eightPlayer: ['Hunter', 'Trevor', 'Konner', 'Silas', 'Jason', 'Graham', 'Tyler', 'Brad'] // Seasons 6+
 };
 
-const EARLY_SEASONS = ['season1', 'season2', 'season3', 'season4'];
+const DEFAULT_SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQbJtP2iVNdFvBKQiZeMJIuiEsLY5M8mv3hcGFXXxJSinxSWWJaBdCtaNZWILdAiT3iOafQoDlpD95N/pubhtml?gid=154588723&single=true';
+
+const SEASONS = [
+    { id: 'season1', title: 'Season 1', desc: '🏆 Hunter Thomas', status: 'completed', champion: 'Hunter', sheetUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQbJtP2iVNdFvBKQiZeMJIuiEsLY5M8mv3hcGFXXxJSinxSWWJaBdCtaNZWILdAiT3iOafQoDlpD95N/pubhtml?gid=1134880669&single=true', playoffFormat: 'six_player', weeksCount: 10, dropLowestCount: 2, players: PLAYER_NAMES.early },
+    { id: 'season2', title: 'Season 2', desc: '🏆 Hunter Thomas', status: 'completed', champion: 'Hunter', sheetUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQbJtP2iVNdFvBKQiZeMJIuiEsLY5M8mv3hcGFXXxJSinxSWWJaBdCtaNZWILdAiT3iOafQoDlpD95N/pubhtml?gid=1204258671&single=true', playoffFormat: 'six_player', weeksCount: 10, dropLowestCount: 2, players: PLAYER_NAMES.early },
+    { id: 'season3', title: 'Season 3', desc: '🏆 Hunter Thomas', status: 'completed', champion: 'Hunter', sheetUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQbJtP2iVNdFvBKQiZeMJIuiEsLY5M8mv3hcGFXXxJSinxSWWJaBdCtaNZWILdAiT3iOafQoDlpD95N/pubhtml?gid=0&single=true', playoffFormat: 'six_player', weeksCount: 10, dropLowestCount: 2, players: PLAYER_NAMES.early },
+    { id: 'season4', title: 'Season 4', desc: '🏆 Trevor Staub', status: 'completed', champion: 'Trevor', sheetUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQbJtP2iVNdFvBKQiZeMJIuiEsLY5M8mv3hcGFXXxJSinxSWWJaBdCtaNZWILdAiT3iOafQoDlpD95N/pubhtml?gid=1919204812&single=true', playoffFormat: 'six_player', weeksCount: 10, dropLowestCount: 2, players: PLAYER_NAMES.early },
+    { id: 'season5', title: 'Season 5', desc: '🏆 Trevor Staub', status: 'completed', champion: 'Trevor', sheetUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQbJtP2iVNdFvBKQiZeMJIuiEsLY5M8mv3hcGFXXxJSinxSWWJaBdCtaNZWILdAiT3iOafQoDlpD95N/pubhtml?gid=643864506&single=true', playoffFormat: 'seven_player', weeksCount: 10, dropLowestCount: 2, players: PLAYER_NAMES.late },
+    { id: 'season6', title: 'Season 6', desc: '🏆 Hunter Thomas', status: 'completed', champion: 'Hunter', sheetUrl: DEFAULT_SHEET_URL, playoffFormat: 'eight_player', weeksCount: 10, dropLowestCount: 2, players: PLAYER_NAMES.eightPlayer },
+    { id: 'season7', title: 'Season 7', desc: '🏆 Hunter Thomas', status: 'completed', champion: 'Hunter', sheetUrl: DEFAULT_SHEET_URL, playoffFormat: 'eight_player', weeksCount: 10, dropLowestCount: 2, players: PLAYER_NAMES.eightPlayer },
+    { id: 'season8', title: 'Season 8', desc: 'Current season', status: 'current', champion: null, sheetUrl: DEFAULT_SHEET_URL, playoffFormat: 'eight_player', weeksCount: 10, dropLowestCount: 2, players: PLAYER_NAMES.eightPlayer }
+];
+
+function getSeasonConfig(seasonId) {
+    return SEASONS.find(season => season.id === seasonId) || SEASONS[SEASONS.length - 1];
+}
 
 console.log('Starting migration to relational structure...\n');
 
@@ -52,9 +68,16 @@ try {
             season_id TEXT NOT NULL UNIQUE,
             title TEXT NOT NULL,
             description TEXT,
+            status TEXT NOT NULL DEFAULT 'completed',
+            champion_player_id INTEGER,
+            sheet_url TEXT,
+            playoff_format TEXT NOT NULL DEFAULT 'six_player',
+            weeks_count INTEGER NOT NULL DEFAULT 10,
+            drop_lowest_count INTEGER NOT NULL DEFAULT 2,
             start_date DATE,
             end_date DATE,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (champion_player_id) REFERENCES players(id)
         );
         
         -- Season-Player junction table
@@ -107,13 +130,30 @@ try {
     `);
     
     console.log('✓ Tables created\n');
+
+    function addColumnIfMissing(statement) {
+        try {
+            db.exec(statement);
+        } catch (error) {
+            if (!String(error.message).toLowerCase().includes('duplicate column')) {
+                throw error;
+            }
+        }
+    }
+
+    addColumnIfMissing("ALTER TABLE seasons ADD COLUMN status TEXT DEFAULT 'completed'");
+    addColumnIfMissing('ALTER TABLE seasons ADD COLUMN champion_player_id INTEGER');
+    addColumnIfMissing('ALTER TABLE seasons ADD COLUMN sheet_url TEXT');
+    addColumnIfMissing("ALTER TABLE seasons ADD COLUMN playoff_format TEXT DEFAULT 'six_player'");
+    addColumnIfMissing('ALTER TABLE seasons ADD COLUMN weeks_count INTEGER DEFAULT 10');
+    addColumnIfMissing('ALTER TABLE seasons ADD COLUMN drop_lowest_count INTEGER DEFAULT 2');
     
     // Step 2: Insert players
     console.log('Step 2: Inserting players...');
     const insertPlayer = db.prepare('INSERT OR IGNORE INTO players (name, display_order) VALUES (?, ?)');
     
     // Insert all unique players
-    const allPlayers = [...new Set([...PLAYER_NAMES.early, ...PLAYER_NAMES.late])];
+    const allPlayers = [...new Set(SEASONS.flatMap(season => season.players))];
     allPlayers.forEach((name, index) => {
         insertPlayer.run(name, index);
     });
@@ -122,22 +162,20 @@ try {
     // Step 3: Insert seasons
     console.log('Step 3: Inserting seasons...');
     const insertSeason = db.prepare(`
-        INSERT OR IGNORE INTO seasons (season_id, title, description) 
-        VALUES (?, ?, ?)
+        INSERT OR IGNORE INTO seasons
+            (season_id, title, description, status, champion_player_id, sheet_url, playoff_format, weeks_count, drop_lowest_count)
+        VALUES (?, ?, ?, ?, (SELECT id FROM players WHERE name = ?), ?, ?, ?, ?)
+    `);
+    const updateSeason = db.prepare(`
+        UPDATE seasons
+        SET title = ?, description = ?, status = ?, champion_player_id = (SELECT id FROM players WHERE name = ?),
+            sheet_url = ?, playoff_format = ?, weeks_count = ?, drop_lowest_count = ?
+        WHERE season_id = ?
     `);
     
-    const seasons = [
-        { id: 'season1', title: 'Season 1', desc: '🏆 Hunter Thomas' },
-        { id: 'season2', title: 'Season 2', desc: '🏆 Hunter Thomas' },
-        { id: 'season3', title: 'Season 3', desc: '🏆 Hunter Thomas' },
-        { id: 'season4', title: 'Season 4', desc: '🏆 Trevor Staub' },
-        { id: 'season5', title: 'Season 5', desc: '🏆 Trevor Staub' },
-        { id: 'season6', title: 'Season 6', desc: '🏆 Hunter Thomas' },
-        { id: 'season7', title: 'Season 7', desc: 'Current season' }
-    ];
-    
-    seasons.forEach(season => {
-        insertSeason.run(season.id, season.title, season.desc);
+    SEASONS.forEach(season => {
+        insertSeason.run(season.id, season.title, season.desc, season.status, season.champion, season.sheetUrl, season.playoffFormat, season.weeksCount, season.dropLowestCount);
+        updateSeason.run(season.title, season.desc, season.status, season.champion, season.sheetUrl, season.playoffFormat, season.weeksCount, season.dropLowestCount, season.id);
     });
     console.log(`✓ Inserted ${seasons.length} seasons\n`);
     
@@ -150,7 +188,7 @@ try {
         VALUES (?, ?, ?)
     `);
     
-    seasons.forEach(season => {
+    SEASONS.forEach(season => {
         const seasonRow = getSeasonId.get(season.id);
         if (!seasonRow) {
             console.warn(`Season ${season.id} not found, skipping...`);
@@ -158,9 +196,7 @@ try {
         }
         const seasonDbId = seasonRow.id;
         
-        const playerList = EARLY_SEASONS.includes(season.id) ? PLAYER_NAMES.early : PLAYER_NAMES.late;
-        
-        playerList.forEach((playerName, colIndex) => {
+        season.players.forEach((playerName, colIndex) => {
             const playerRow = getPlayerId.get(playerName);
             if (playerRow) {
                 insertSeasonPlayer.run(seasonDbId, playerRow.id, colIndex);
@@ -205,7 +241,8 @@ try {
             const seasonDbId = seasonRow.id;
             
             // Get player list for this season
-            const playerList = EARLY_SEASONS.includes(cell.season_id) ? PLAYER_NAMES.early : PLAYER_NAMES.late;
+            const seasonConfig = getSeasonConfig(cell.season_id);
+            const playerList = seasonConfig.players;
             
             if (col >= playerList.length) {
                 continue; // Invalid column index
@@ -217,7 +254,7 @@ try {
             const playerDbId = playerRow.id;
             
             // Row 0-9 are weeks 1-10 (scores)
-            if (row >= 0 && row <= 9) {
+            if (row >= 0 && row < seasonConfig.weeksCount) {
                 const week = row + 1; // Convert 0-based to 1-based week
                 const scoreValue = cell.value ? parseFloat(cell.value) : null;
                 
@@ -232,13 +269,13 @@ try {
                 scoresMigrated++;
             }
             // Row 10 (index 10) is total (sum of weeks 1-10)
-            else if (row === 10) {
+            else if (row === seasonConfig.weeksCount) {
                 const value = parseFloat(cell.value) || 0;
                 insertCalculated.run(seasonDbId, playerDbId, 'total', value);
                 calculatedMigrated++;
             }
             // Row 11 (index 11) is total minus two lowest
-            else if (row === 11) {
+            else if (row === seasonConfig.weeksCount + 1) {
                 const value = parseFloat(cell.value) || 0;
                 insertCalculated.run(seasonDbId, playerDbId, 'total_minus_two_lowest', value);
                 calculatedMigrated++;
