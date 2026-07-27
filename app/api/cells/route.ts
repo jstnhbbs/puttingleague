@@ -8,6 +8,7 @@ import {
   ensureSeasonCatalog,
   type DbRow,
 } from '../../lib/db'
+import { isAdminRequest, unauthorizedResponse } from '../../lib/adminSession'
 
 function ensureSeasonPlayerRelationships(
   db: ReturnType<typeof getDb>,
@@ -114,6 +115,10 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  if (!isAdminRequest(request)) {
+    return unauthorizedResponse()
+  }
+
   if (!isTursoConfigured()) {
     return NextResponse.json({ error: 'Database not configured' }, { status: 503 })
   }

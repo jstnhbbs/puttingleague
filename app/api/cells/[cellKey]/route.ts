@@ -6,11 +6,16 @@ import {
   ensureSeasonCatalog,
   type DbRow,
 } from '../../../lib/db'
+import { isAdminRequest, unauthorizedResponse } from '../../../lib/adminSession'
 
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ cellKey: string }> }
 ) {
+  if (!isAdminRequest(request)) {
+    return unauthorizedResponse()
+  }
+
   if (!isTursoConfigured()) {
     return NextResponse.json({ error: 'Database not configured' }, { status: 503 })
   }

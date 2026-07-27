@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import styles from './page.module.css'
 import { sheets } from './data/sheets'
-import { SheetIframe } from './components/SheetIframe'
 import { Leaderboard } from './components/Leaderboard'
 import { SeasonPlayoff } from './components/SeasonPlayoff'
 

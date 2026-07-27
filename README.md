@@ -32,6 +32,17 @@ npm run build
 
 ## Configuration
 
+### Admin Editing
+
+Editing is protected by a signed, HTTP-only admin session cookie. Set these environment variables in `.env.local` and in your deployment environment:
+
+```bash
+ADMIN_PASSWORD="your editing password"
+ADMIN_SESSION_SECRET="a long random string used to sign admin sessions"
+```
+
+`NEXTAUTH_SECRET` can be used as the signing secret if `ADMIN_SESSION_SECRET` is not set. Admin sessions expire after 12 hours.
+
 ### Adding Google Sheets
 
 1. Open `app/page.tsx` and update the `sheets` array with your sheet information

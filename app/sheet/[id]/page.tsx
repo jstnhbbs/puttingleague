@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import styles from './page.module.css'
 import { sheets } from '../../data/sheets'
-import { SheetIframe } from '../../components/SheetIframe'
 import TestPageContent from './TestPageContent'
 
 export function generateStaticParams() {

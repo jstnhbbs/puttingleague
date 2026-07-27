@@ -19,6 +19,55 @@ export interface PlayoffScore {
 
 export type PlayoffScoresResponse = Record<string, PlayoffScore>
 
+export async function checkAdminSession(): Promise<boolean> {
+    try {
+        const response = await fetch(`${API_URL}/api/admin/session`, {
+            method: 'GET',
+            credentials: 'include',
+        })
+        if (!response.ok) return false
+        const data = (await response.json()) as { authenticated?: boolean }
+        return data.authenticated === true
+    } catch (error) {
+        console.error('Error checking admin session:', error)
+        return false
+    }
+}
+
+export async function loginAdmin(password: string): Promise<{ success: boolean; error?: string }> {
+    try {
+        const response = await fetch(`${API_URL}/api/admin/session`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({ password }),
+        })
+
+        if (!response.ok) {
+            const data = (await response.json().catch(() => null)) as { error?: string } | null
+            return { success: false, error: data?.error ?? 'Unable to unlock editing' }
+        }
+
+        return { success: true }
+    } catch (error) {
+        console.error('Error logging in admin:', error)
+        return { success: false, error: 'Unable to unlock editing' }
+    }
+}
+
+export async function logoutAdmin(): Promise<void> {
+    try {
+        await fetch(`${API_URL}/api/admin/session`, {
+            method: 'DELETE',
+            credentials: 'include',
+        })
+    } catch (error) {
+        console.error('Error logging out admin:', error)
+    }
+}
+
 // Fetch all cells from the server for a specific season
 export async function fetchCells(seasonId: string = 'season7'): Promise<CellsResponse> {
     try {
@@ -58,28 +107,6 @@ export async function fetchCells(seasonId: string = 'season7'): Promise<CellsRes
         console.error('Error fetching cells:', error)
         // Fallback to empty object if server is unavailable
         return {}
-    }
-}
-
-// Save a single cell to the server for a specific season
-export async function saveCell(cellKey: string, cell: Cell, seasonId: string = 'season7'): Promise<boolean> {
-    try {
-        const response = await fetch(`${API_URL}/api/cells`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                cellKey,
-                value: cell.value,
-                isFormula: cell.isFormula,
-                seasonId,
-            }),
-        })
-        return response.ok
-    } catch (error) {
-        console.error('Error saving cell:', error)
-        return false
     }
 }
 
@@ -124,6 +151,7 @@ export async function savePlayoffScore(
             headers: {
                 'Content-Type': 'application/json',
             },
+            credentials: 'include',
             body: JSON.stringify({
                 seasonId,
                 gameKey,
@@ -151,6 +179,7 @@ export async function saveCells(cells: Record<string, Cell>, seasonId: string = 
             headers: {
                 'Content-Type': 'application/json',
             },
+            credentials: 'include',
             body: JSON.stringify({ cells, seasonId }),
         })
 
@@ -177,19 +206,6 @@ export async function saveCells(cells: Record<string, Cell>, seasonId: string = 
         return true
     } catch (error) {
         console.error('Error saving cells:', error)
-        return false
-    }
-}
-
-// Delete a cell from the server for a specific season
-export async function deleteCell(cellKey: string, seasonId: string = 'season7'): Promise<boolean> {
-    try {
-        const response = await fetch(`${API_URL}/api/cells/${cellKey}?season=${encodeURIComponent(seasonId)}`, {
-            method: 'DELETE',
-        })
-        return response.ok
-    } catch (error) {
-        console.error('Error deleting cell:', error)
         return false
     }
 }

@@ -3,12 +3,18 @@
 import { useState, useCallback, useEffect } from 'react'
 import Link from 'next/link'
 import styles from './TestPageContent.module.css'
-import { fetchCells, saveCells, checkHealth, type Cell } from '../../lib/api'
+import {
+    checkAdminSession,
+    fetchCells,
+    loginAdmin,
+    logoutAdmin,
+    saveCells,
+    checkHealth,
+    type Cell,
+} from '../../lib/api'
 import { SeasonPlayoff } from '../../components/SeasonPlayoff'
 
 const ROWS = 12
-// Set your password here - change this to your desired password
-const EDIT_PASSWORD = 'admin123' // Change this to your password
 
 // Get column configuration based on season
 const getColumnConfig = (seasonId: string) => {
@@ -139,36 +145,39 @@ export default function TestPageContent({ sheetTitle, seasonId }: TestPageConten
         return () => clearTimeout(timeoutId)
     }, [cells, useDatabase, seasonId])
 
-    // Check for existing authentication on mount
+    // Check for existing server-side admin session on mount
     useEffect(() => {
-        const authStatus = localStorage.getItem('testPageAuth')
-        if (authStatus === 'authenticated') {
-            setIsAuthenticated(true)
+        let isMounted = true
+
+        checkAdminSession().then((authenticated) => {
+            if (!isMounted) return
+            setIsAuthenticated(authenticated)
             setShowPasswordPrompt(false)
-        } else {
-            // Default to view-only mode
-            setIsAuthenticated(false)
-            setShowPasswordPrompt(false)
+        })
+
+        return () => {
+            isMounted = false
         }
     }, [])
 
-    const handlePasswordSubmit = (e: React.FormEvent) => {
+    const handlePasswordSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (passwordInput === EDIT_PASSWORD) {
+        const result = await loginAdmin(passwordInput)
+        if (result.success) {
             setIsAuthenticated(true)
             setShowPasswordPrompt(false)
             setPasswordError('')
-            localStorage.setItem('testPageAuth', 'authenticated')
+            setPasswordInput('')
         } else {
-            setPasswordError('Incorrect password. This page is view-only.')
+            setPasswordError(result.error ?? 'Incorrect password. This page is view-only.')
             setPasswordInput('')
         }
     }
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        await logoutAdmin()
         setIsAuthenticated(false)
         setShowPasswordPrompt(false) // Don't show prompt, just go back to view-only
-        localStorage.removeItem('testPageAuth')
     }
 
     const handleUnlockClick = () => {

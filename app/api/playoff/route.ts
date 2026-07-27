@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb, isTursoConfigured, ensureSeasonCatalog, type DbRow } from '../../lib/db'
+import { isAdminRequest, unauthorizedResponse } from '../../lib/adminSession'
 
 async function ensurePlayoffTable() {
   const db = getDb()
@@ -55,6 +56,10 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  if (!isAdminRequest(request)) {
+    return unauthorizedResponse()
+  }
+
   if (!isTursoConfigured()) {
     return NextResponse.json({ error: 'Database not configured' }, { status: 503 })
   }
@@ -102,4 +107,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to save playoff score' }, { status: 500 })
   }
 }
-

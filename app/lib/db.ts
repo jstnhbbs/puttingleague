@@ -107,7 +107,3 @@ export function relationalToCellKey(row: number, col: number): string {
 
 /** Row shape from Turso (column names as keys) */
 export type DbRow = Record<string, unknown>
-
-export function rowToObject<T extends DbRow>(row: DbRow): T {
-  return row as T
-}
