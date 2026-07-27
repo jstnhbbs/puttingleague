@@ -37,9 +37,10 @@ interface SeasonPlayoffProps {
   season: SeasonSummary
   isAuthenticated: boolean
   compactLayout?: boolean
+  className?: string
 }
 
-export function SeasonPlayoff({ season, isAuthenticated, compactLayout = false }: SeasonPlayoffProps) {
+export function SeasonPlayoff({ season, isAuthenticated, compactLayout = false, className = '' }: SeasonPlayoffProps) {
   const seasonId = season.id
   const isEarly = season.playoffFormat === 'six_player'
   const isSeason5 = season.playoffFormat === 'seven_player'
@@ -152,7 +153,7 @@ export function SeasonPlayoff({ season, isAuthenticated, compactLayout = false }
 
   return (
     <section
-      className={`${styles.wrapper} ${compactLayout ? styles.wrapperCompact : ''}`}
+      className={`${styles.wrapper} ${compactLayout ? styles.wrapperCompact : ''} ${className}`}
       aria-label="Season playoffs"
     >
       <h2 className={styles.title}>Playoffs</h2>

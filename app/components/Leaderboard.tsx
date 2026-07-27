@@ -8,9 +8,10 @@ import styles from './Leaderboard.module.css'
 
 interface LeaderboardProps {
     season: SeasonSummary | null
+    className?: string
 }
 
-export function Leaderboard({ season }: LeaderboardProps) {
+export function Leaderboard({ season, className = '' }: LeaderboardProps) {
     const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [useDatabase, setUseDatabase] = useState(false)
@@ -63,7 +64,7 @@ export function Leaderboard({ season }: LeaderboardProps) {
     // Always show loading state during SSR to prevent hydration mismatch
     if (!mounted || isLoading) {
         return (
-            <div className={styles.leaderboard}>
+            <div className={`${styles.leaderboard} ${className}`}>
                 <h3 className={styles.title}>{title}</h3>
                 <p className={styles.loading}>Loading...</p>
             </div>
@@ -72,7 +73,7 @@ export function Leaderboard({ season }: LeaderboardProps) {
 
     if (!useDatabase) {
         return (
-            <div className={styles.leaderboard}>
+            <div className={`${styles.leaderboard} ${className}`}>
                 <h3 className={styles.title}>{title}</h3>
                 <p className={styles.unavailable}>Database unavailable</p>
             </div>
@@ -82,7 +83,7 @@ export function Leaderboard({ season }: LeaderboardProps) {
     const leaderScore = leaderboard[0]?.score ?? 0
 
     return (
-        <div className={styles.leaderboard}>
+        <div className={`${styles.leaderboard} ${className}`}>
             <h3 className={styles.title}>{title}</h3>
             <div
                 className={styles.tableWrapper}

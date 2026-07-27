@@ -32,10 +32,16 @@ export default function Home() {
                 <p className={styles.subtitle}>Select a season to view</p>
                 <div className={styles.dashboardGrid}>
                     <div className={styles.dashboardPanel}>
-                        <Leaderboard season={currentSeason} />
+                        <Leaderboard season={currentSeason} className={styles.dashboardCard} />
                     </div>
                     <div className={styles.dashboardPanel}>
-                        {currentSeason && <SeasonPlayoff season={currentSeason} isAuthenticated={false} />}
+                        {currentSeason && (
+                            <SeasonPlayoff
+                                season={currentSeason}
+                                isAuthenticated={false}
+                                className={styles.dashboardCard}
+                            />
+                        )}
                     </div>
                 </div>
                 <div className={styles.grid}>
